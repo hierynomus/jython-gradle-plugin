@@ -16,6 +16,8 @@
 package com.hierynomus.gradle.plugins.jython
 
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Shared
 import spock.lang.Specification
@@ -48,5 +50,22 @@ class JythonPluginTest extends Specification {
 
         then:
         new File(project.buildDir, "jython/main/boto3/__init__.py").exists()
+    }
+
+    def "should bundle runtime deps in jar if Java plugin is applied"() {
+        setup:
+        project.apply plugin: 'java'
+        project.dependencies {
+            jython ":boto3:1.1.3"
+        }
+
+        when:
+        project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).asType(Jar).execute()
+
+
+        def archive = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).asType(Jar).archivePath
+        then:
+        archive.exists()
+        // TODO check contents of jar
     }
 }

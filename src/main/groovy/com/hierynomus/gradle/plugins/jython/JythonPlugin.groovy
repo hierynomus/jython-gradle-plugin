@@ -18,6 +18,7 @@ package com.hierynomus.gradle.plugins.jython
 import com.hierynomus.gradle.plugins.jython.tasks.DownloadJythonDeps
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPlugin
 
 class JythonPlugin implements Plugin<Project> {
     static final RUNTIME_SCOPE_CONFIGURATION = "jython"
@@ -33,7 +34,15 @@ class JythonPlugin implements Plugin<Project> {
         configureProject(project)
         createTasks(project)
 
-
+        project.plugins.withType(JavaPlugin) {
+            project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).configure {
+                from(project.tasks.getByName(RUNTIME_DEP_DOWNLOAD).asType(DownloadJythonDeps).outputDir) {
+                    rename { name ->
+                        return name.substring(name.indexOf('/') + 1)
+                    }
+                }
+            }
+        }
     }
 
     def configureProject(Project project) {

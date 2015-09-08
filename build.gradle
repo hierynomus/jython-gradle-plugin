@@ -1,0 +1,146 @@
+defaultTasks 'build'
+
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'optional-base'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.5'
+        classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:2.2.+'
+    }
+}
+
+group = 'nl.javadude.gradle.plugins'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+repositories { jcenter() }
+
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
+
+configurations.compile.transitive = false
+
+dependencies {
+    compile gradleApi()
+    compile "org.codehaus.groovy.modules.http-builder:http-builder:0.7.2"
+    compile "org.apache.commons:commons-compress:1.10"
+
+    testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
+        exclude group: 'org.codehaus.groovy', module: 'groovy-all'
+    }
+}
+
+// This disables the pedantic doclint feature of JDK8
+if (JavaVersion.current().isJava8Compatible()) {
+    tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+test {
+  afterSuite { descriptor, result ->
+    def indicator = "\u001B[32m✓\u001b[0m"
+    if (result.failedTestCount > 0) {
+      indicator = "\u001B[31m✘\u001b[0m"
+    }
+    logger.lifecycle("$indicator Test ${descriptor.name}; Executed: ${result.testCount}/\u001B[32m${result.successfulTestCount}\u001B[0m/\u001B[31m${result.failedTestCount}\u001B[0m")
+  }
+}
+
+def pomConfig = {
+    name project.name
+    description project.project_description
+    url project.project_url
+    inceptionYear '2011'
+
+    scm { url project.project_scm }
+
+    licenses {
+        license([:]) {
+            name 'The Apache Software License, Version 2.0'
+            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            distribution 'repo'
+        }
+    }
+
+    developers {
+        developer {
+            id 'hierynomus'
+            name 'Jeroen van Erp'
+            url 'http://www.javadude.nl/'
+            email 'jeroen@hierynomus.com'
+            roles { role 'Developer' }
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenCustom(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom.withXml {
+                asNode().children().last() + pomConfig
+            }
+        }
+    }
+}
+
+// Both 'bintrayUsername' and 'bintrayApiKey' must defined in the ~/.gradle/gradle.properties
+if (!project.hasProperty('bintrayUsername')) ext.bintrayUsername = 'invalid'
+if (!project.hasProperty('bintrayApiKey')) ext.bintrayApiKey = 'invalid'
+
+bintray {
+    user = project.bintrayUsername
+    key = project.bintrayApiKey
+    publications = ['mavenCustom']
+    pkg {
+        repo = project.project_bintray_repo
+        name = project.name
+        desc = project.project_description
+        licenses = ['Apache-2.0']
+        labels = ['gradle', 'plugin', 'license']
+        websiteUrl = project.project_url
+        issueTrackerUrl = project.project_issues_url
+        vcsUrl = project.project_scm
+        publicDownloadNumbers = true
+        version {
+            vcsTag = project.version
+            attributes = [
+                    'gradle-plugin': ['com.github.hierynomus.jython', project.group, project.name].join(':')
+            ]
+        }
+    }
+}
+
+if (!System.env.containsKey("JENKINS_URL")) {
+    def javaVersion = System.properties['java.version']
+    if (JavaVersion.toVersion(javaVersion) != project.targetCompatibility) {
+//        throw new GradleException("Expected Java version ${project.targetCompatibility} but running with $javaVersion")
+    }
+}

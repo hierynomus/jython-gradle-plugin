@@ -1,0 +1,16 @@
+out/
+bin/
+build/
+*.iml
+*.iws
+*.ipr
+*~
+.gradle/
+userHome/
+s101plugin.state
+.DS_Store
+/.settings
+/.project
+/.classpath
+.idea/
+classes/

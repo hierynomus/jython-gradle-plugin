@@ -15,12 +15,16 @@
  */
 package com.hierynomus.gradle.plugins.jython
 
+import org.apache.commons.compress.archivers.jar.JarArchiveEntry
+import org.apache.commons.compress.archivers.jar.JarArchiveInputStream
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.util.jar.JarEntry
 
 /**
  * Created by ajvanerp on 08/09/15.
@@ -60,12 +64,28 @@ class JythonPluginTest extends Specification {
         }
 
         when:
-        project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).asType(Jar).execute()
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+        project.tasks.getByName(JavaPlugin.PROCESS_RESOURCES_TASK_NAME).execute()
+        project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).execute()
 
 
         def archive = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).asType(Jar).archivePath
         then:
         archive.exists()
-        // TODO check contents of jar
+        getEntriesOfJar(archive).contains("boto3/__init__.py")
+    }
+
+    List<String> getEntriesOfJar(File archive) {
+        def stream = new JarArchiveInputStream(new FileInputStream(archive))
+        List<String> names = new ArrayList<>()
+        try {
+            JarArchiveEntry entry;
+            while ((entry = stream.nextJarEntry) != null) {
+                names.add(entry.name)
+            }
+        } finally {
+            stream.close()
+        }
+        return names
     }
 }

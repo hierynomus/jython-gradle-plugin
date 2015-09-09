@@ -35,12 +35,14 @@ class JythonPlugin implements Plugin<Project> {
         createTasks(project)
 
         project.plugins.withType(JavaPlugin) {
-            project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).configure {
-                from(project.tasks.getByName(RUNTIME_DEP_DOWNLOAD).asType(DownloadJythonDeps).outputDir) {
-                    rename { name ->
-                        return name.substring(name.indexOf('/') + 1)
-                    }
-                }
+            project.sourceSets.main.resources.srcDirs += project.tasks.getByName(RUNTIME_DEP_DOWNLOAD).asType(DownloadJythonDeps).outputDir
+            project.tasks.getByName(JavaPlugin.PROCESS_RESOURCES_TASK_NAME).configure {
+                dependsOn project.tasks.getByName(RUNTIME_DEP_DOWNLOAD)
+            }
+
+            project.sourceSets.test.resources.srcDirs += project.tasks.getByName(TEST_DEP_DOWNLOAD).asType(DownloadJythonDeps).outputDir
+            project.tasks.getByName(JavaPlugin.PROCESS_TEST_RESOURCES_TASK_NAME).configure {
+                dependsOn project.tasks.getByName(TEST_DEP_DOWNLOAD)
             }
         }
     }

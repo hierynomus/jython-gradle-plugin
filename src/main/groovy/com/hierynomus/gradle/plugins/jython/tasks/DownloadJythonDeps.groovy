@@ -16,9 +16,8 @@
 package com.hierynomus.gradle.plugins.jython.tasks
 
 import com.hierynomus.gradle.plugins.jython.JythonExtension
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import groovy.text.SimpleTemplateEngine
+import groovy.text.Template
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
@@ -27,9 +26,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-/**
- * Created by ajvanerp on 08/09/15.
- */
 class DownloadJythonDeps extends DefaultTask {
 
     String configuration
@@ -44,21 +40,23 @@ class DownloadJythonDeps extends DefaultTask {
         project.configurations.getByName(configuration).allDependencies*.each { d ->
             String name = d.name
             String version = d.version
-            logger.debug("Downloading Jython library: $name with version $version")
+            logger.lifecycle("Downloading Jython library: $name with version $version")
 
-            HttpGet req = new HttpGet(constructUrl(name, version))
-            HttpClient client = new DefaultHttpClient()
-            HttpResponse response = client.execute(req)
-            if (response.statusLine.statusCode == 200) {
-                logger.debug "Got response: ${response.statusLine}"
-                logger.debug "Response length: ${response.getFirstHeader('Content-Length')}"
-                UnTarJythonLib.uncompressToOutputDir(response.entity.content, outputDir, name)
+            for (String repository : extension.sourceRepositories) {
+                def engine = new SimpleTemplateEngine()
+                def template = engine.createTemplate(repository)
+                def repo = template.make(['dep': d])
+
+                HttpGet req = new HttpGet(repo.toString())
+                HttpClient client = new DefaultHttpClient()
+                HttpResponse response = client.execute(req)
+                if (response.statusLine.statusCode == 200) {
+                    logger.debug "Got response: ${response.statusLine}"
+                    logger.debug "Response length: ${response.getFirstHeader('Content-Length')}"
+                    UnTarJythonLib.uncompressToOutputDir(response.entity.content, outputDir, name)
+                    break
+                }
             }
         }
     }
-
-    String constructUrl(String name, String version) {
-        return "${extension.sourceRepository}/${name.charAt(0)}/${name}/${name}-${version}.tar.gz"
-    }
-
- }
+}

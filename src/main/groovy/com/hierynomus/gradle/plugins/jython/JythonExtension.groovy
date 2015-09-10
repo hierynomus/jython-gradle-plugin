@@ -15,10 +15,10 @@
  */
 package com.hierynomus.gradle.plugins.jython
 
-/**
- * Created by ajvanerp on 08/09/15.
- */
 class JythonExtension {
 
-    def sourceRepository = "https://pypi.python.org/packages/source"
+    def sourceRepositories = [
+            'https://pypi.python.org/packages/source/${dep.name[0]}/${dep.name}/${dep.name}-${dep.version}.tar.gz',
+            'https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz'
+    ]
 }

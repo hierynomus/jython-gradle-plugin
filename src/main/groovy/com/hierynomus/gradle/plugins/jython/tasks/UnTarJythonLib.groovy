@@ -20,9 +20,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.gradle.api.logging.Logging
 
-/**
- * Created by ajvanerp on 10/09/15.
- */
 class UnTarJythonLib {
     static final def logger = Logging.getLogger(UnTarJythonLib.class)
 

@@ -26,7 +26,6 @@ configurations.compile.transitive = false
 
 dependencies {
     compile gradleApi()
-    compile "org.codehaus.groovy.modules.http-builder:http-builder:0.7.2"
     compile "org.apache.commons:commons-compress:1.10"
 
     testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
@@ -65,7 +64,7 @@ def pomConfig = {
     name project.name
     description project.project_description
     url project.project_url
-    inceptionYear '2011'
+    inceptionYear '2015'
 
     scm { url project.project_scm }
 

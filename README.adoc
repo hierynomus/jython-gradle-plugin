@@ -37,9 +37,44 @@ In your `build.gradle` file add:
     }
 ----
 
-== How it works
+== Example
+The following example will download the `boto3` library from `pypi.python.org` and bundle it in your Jar file.
 
+[source,groovy,subs="verbatim,attributes"]
+----
+plugins {
+    id "java"
+    id "com.github.hierynomus.jython" version "{jython_plugin_version}"
+}
 
+dependencies {
+  jython ":boto3:1.1.3"
+}
+----
+
+== Configuration
+By default the following two repository-patterns have been defined for the plugin:
+
+- `https://pypi.python.org/packages/source/${dep.name[0]}/${dep.name}/${dep.name}-${dep.version}.tar.gz`
+- `https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz`
+
+These can be overridden or extended using the `jython` extension. For instance:
+
+[source,groovy,subs="verbatim,attributes"]
+----
+jython {
+  sourceRepositories += `http://my.local.repo/${dep.name}/${dep.version}/${dep.name}-${dep.version}.tar.gz
+}
+----
+
+== If a python module name differs from the repository name.
+In some cases on github, the python module name is not the same as the github repository name. In order to overcome this, you can use the `classifier` of the dependency to set the correct module name used for extraction. For instance:
+
+----
+dependencies {
+  jython "jmespath:jmespath.py:0.7.1:jmespath"
+}
+----
 
 == Changelog
 

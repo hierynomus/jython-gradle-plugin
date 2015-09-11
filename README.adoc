@@ -55,8 +55,8 @@ dependencies {
 == Configuration
 By default the following two repository-patterns have been defined for the plugin:
 
-- `https://pypi.python.org/packages/source/${dep.name[0]}/${dep.name}/${dep.name}-${dep.version}.tar.gz`
-- `https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz`
+- +https://pypi.python.org/packages/source/${dep.name[0]}/${dep.name}/${dep.name}-${dep.version}.tar.gz+
+- +https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz+
 
 These can be overridden or extended using the `jython` extension. For instance:
 

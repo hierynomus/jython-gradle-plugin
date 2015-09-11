@@ -1,0 +1,47 @@
+= Jython Gradle Plugin
+Jeroen van Erp
+:jython_plugin_version: 0.1.0
+
+image::https://travis-ci.org/hierynomus/jython-gradle-plugin.svg?branch=master[]
+
+This plugin will scan and adapt your source files to include a provided header, e.g. a LICENSE file.  By default it will scan every source set and report warnings. It will also create format tasks, which will properly format and apply the specified header. A bulk of the logic comes from the maven-license-plugin.
+
+This plugin will also report on the licenses of your dependencies.
+
+== Usage
+The `jython-gradle-plugin` will be published to http://bintray.com[] and will be available through the http://plugins.gradle.org/[Gradle plugin exchange]. This means that there are a few different usage scenarios listed below.
+
+=== Gradle 2.1 and above
+In your `build.gradle` file add:
+
+[source,groovy,subs="verbatim,attributes"]
+----
+plugins {
+    id "com.github.hierynomus.jython" version "{jython_plugin_version}"
+}
+----
+
+=== Gradle 1.x/2.0
+In your `build.gradle` file add:
+
+[source,groovy,subs="verbatim,attributes"]
+----
+    buildscript {
+        repositories {
+            jcenter()
+        }
+
+        dependencies {
+            classpath 'com.hierynomus.gradle.plugins:jython-gradle-plugin:{jython_plugin_version}'
+        }
+    }
+----
+
+== How it works
+
+
+
+== Changelog
+
+=== v0.1.0
+- Initial version supporting `pypi` and `github` library locations

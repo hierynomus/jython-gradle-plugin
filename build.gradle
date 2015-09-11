@@ -7,7 +7,7 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
 
-group = 'nl.javadude.gradle.plugins'
+group = 'com.hierynomus.gradle.plugins'
 defaultTasks 'build'
 
 sourceCompatibility = 1.7
@@ -31,6 +31,8 @@ dependencies {
     testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
         exclude group: 'org.codehaus.groovy', module: 'groovy-all'
     }
+    testCompile 'com.xebialabs.restito:restito:0.7'
+//    testCompile gradleTestKit()
 }
 
 // This disables the pedantic doclint feature of JDK8

@@ -17,12 +17,12 @@ package com.hierynomus.gradle.plugins.jython.tasks
 
 import com.hierynomus.gradle.plugins.jython.JythonExtension
 import groovy.text.SimpleTemplateEngine
-import groovy.text.Template
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.DefaultHttpClient
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
@@ -37,15 +37,15 @@ class DownloadJythonDeps extends DefaultTask {
 
     @TaskAction
     def process() {
-        project.configurations.getByName(configuration).allDependencies*.each { d ->
-            String name = d.name
-            String version = d.version
-            logger.lifecycle("Downloading Jython library: $name with version $version")
+        project.configurations.getByName(configuration).allDependencies.withType(ExternalModuleDependency.class)*.each { d ->
+            String name = getNameOfModule(d)
+            logger.lifecycle("Downloading Jython library: $name with version ${d.version}")
 
             for (String repository : extension.sourceRepositories) {
                 def engine = new SimpleTemplateEngine()
                 def template = engine.createTemplate(repository)
                 def repo = template.make(['dep': d])
+                logger.lifecycle("Trying: $repo")
 
                 HttpGet req = new HttpGet(repo.toString())
                 HttpClient client = new DefaultHttpClient()
@@ -57,6 +57,14 @@ class DownloadJythonDeps extends DefaultTask {
                     break
                 }
             }
+        }
+    }
+
+    String getNameOfModule(ExternalModuleDependency externalModuleDependency) {
+        if (externalModuleDependency.artifacts) {
+            return externalModuleDependency.artifacts.getAt(0).classifier
+        } else {
+            return externalModuleDependency.name
         }
     }
 }

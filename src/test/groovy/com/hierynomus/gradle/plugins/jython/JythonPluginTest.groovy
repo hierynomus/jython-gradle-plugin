@@ -15,8 +15,10 @@
  */
 package com.hierynomus.gradle.plugins.jython
 
+import com.xebialabs.restito.server.StubServer
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream
+import org.glassfish.grizzly.http.util.HttpStatus
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.bundling.Jar
@@ -24,43 +26,50 @@ import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Shared
 import spock.lang.Specification
 
-import java.util.jar.JarEntry
+import static com.xebialabs.restito.semantics.Action.*
+import static com.xebialabs.restito.semantics.Condition.*;
 
-/**
- * Created by ajvanerp on 08/09/15.
- */
+import static com.xebialabs.restito.builder.stub.StubHttp.whenHttp
+
 class JythonPluginTest extends Specification {
     @Shared Project project
     @Shared File projectDir = new File("rootPrj")
+    @Shared StubServer server
 
     def setup() {
+        server = new StubServer()
+        server.run()
         projectDir.mkdirs()
         project = ProjectBuilder.builder().withProjectDir(projectDir).withName("test").build()
         project.apply plugin: 'jython'
+        project.jython.sourceRepositories = ['http://localhost:' + server.getPort() + '/${dep.group}/${dep.name}/${dep.name}-${dep.version}.tar.gz']
+        whenHttp(server).match(get("/test/pylib/pylib-0.1.0.tar.gz")).then(ok(), resourceContent("pylib-0.1.0.tar.gz"))
     }
 
     def cleanup() {
         projectDir.deleteDir()
+        server.stop()
     }
 
     def "should download defined jython library dependency"() {
         setup:
         project.dependencies {
-            jython ":boto3:1.1.3"
+            jython "test:pylib:0.1.0"
         }
 
         when:
         project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
 
         then:
-        new File(project.buildDir, "jython/main/boto3/__init__.py").exists()
+        new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+        !new File(project.buildDir, "jython/main/requirements.txt").exists()
     }
 
     def "should bundle runtime deps in jar if Java plugin is applied"() {
         setup:
         project.apply plugin: 'java'
         project.dependencies {
-            jython ":boto3:1.1.3"
+            jython "test:pylib:0.1.0"
         }
 
         when:
@@ -72,7 +81,38 @@ class JythonPluginTest extends Specification {
         def archive = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).asType(Jar).archivePath
         then:
         archive.exists()
-        getEntriesOfJar(archive).contains("boto3/__init__.py")
+        getEntriesOfJar(archive).contains("pylib/__init__.py")
+    }
+
+    def "should handle python libraries which are redirected to another url"() {
+        setup:
+        project.apply plugin: 'java'
+        project.dependencies {
+            jython "redirect:pylib:0.1.0"
+        }
+        whenHttp(server).match(get("/redirect/pylib/pylib-0.1.0.tar.gz")).then(status(HttpStatus.MOVED_PERMANENTLY_301), header("Location", "/test/pylib/pylib-0.1.0.tar.gz"))
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+    }
+
+    def "should handle github python libraries for which the repository name is not the python module name"() {
+        setup:
+        project.apply plugin: 'java'
+        project.dependencies {
+            jython "test:pylib.py:0.1.0:pylib"
+        }
+        whenHttp(server).match(get("/test/pylib.py/pylib.py-0.1.0.tar.gz")).then(ok(), resourceContent("pylib-0.1.0.tar.gz"))
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+
     }
 
     List<String> getEntriesOfJar(File archive) {

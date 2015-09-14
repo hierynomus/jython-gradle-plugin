@@ -67,12 +67,13 @@ jython {
 }
 ----
 
-== If a python module name differs from the repository name.
-In some cases on github, the python module name is not the same as the github repository name. In order to overcome this, you can use the `classifier` of the dependency to set the correct module name used for extraction. For instance:
+== If a python module name differs from the artifact name.
+In some cases, the python module name is not the same as the artifact name. In order to overcome this, you can use the `classifier` of the dependency to set the correct module name used for extraction. For instance:
 
 ----
 dependencies {
   jython "jmespath:jmespath.py:0.7.1:jmespath"
+  jython ":python-dateutil:2.4.2:dateutil"
 }
 ----
 

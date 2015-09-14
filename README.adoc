@@ -67,15 +67,35 @@ jython {
 }
 ----
 
-== If a python module name differs from the artifact name.
+== Non-default libraries/modules
+
+=== If a python module name differs from the artifact name.
 In some cases, the python module name is not the same as the artifact name. In order to overcome this, you can use the `classifier` of the dependency to set the correct module name used for extraction. For instance:
 
+[source,groovy,subs="verbatim,attributes"]
 ----
 dependencies {
   jython "jmespath:jmespath.py:0.7.1:jmespath"
   jython ":python-dateutil:2.4.2:dateutil"
 }
 ----
+
+=== If you only need to include specific file(s) from the module
+In some cases, the python script(s) are not bundled in a python module directory, but rather in the root. In these cases you can configure the plugin with the following dependency:
+
+[source,groovy,subs="verbatim,attributes"]
+----
+dependencies {
+  jython(":six:1.9.0") {
+    artifact {
+      name = "six"
+      extension = "py"
+    }
+  }
+}
+----
+
+This will only add the `six.py` file from the downloaded module.
 
 == Changelog
 

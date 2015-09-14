@@ -112,7 +112,25 @@ class JythonPluginTest extends Specification {
 
         then:
         new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+    }
 
+    def "should support getting a single file from the tar.gz"() {
+        setup:
+        project.dependencies {
+            jython("test:pylib:0.1.0") {
+                artifact {
+                    name = "artifact"
+                    extension = "py"
+                }
+            }
+        }
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        !new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+        new File(project.buildDir, "jython/main/artifact.py").exists()
     }
 
     List<String> getEntriesOfJar(File archive) {

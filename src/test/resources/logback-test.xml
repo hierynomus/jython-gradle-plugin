@@ -29,6 +29,8 @@
         </encoder>
     </appender>
 
+    <logger name="com.hierynomus.gradle.plugins.jython.tasks.UnTarJythonLib" level="debug" />
+
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>

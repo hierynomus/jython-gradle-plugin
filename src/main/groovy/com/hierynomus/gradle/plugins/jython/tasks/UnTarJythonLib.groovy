@@ -23,7 +23,7 @@ import org.gradle.api.logging.Logging
 class UnTarJythonLib {
     static final def logger = Logging.getLogger(UnTarJythonLib.class)
 
-    static def uncompressToOutputDir(InputStream is, File output, String packageName) {
+    static def uncompressToOutputDir(InputStream is, File output, Closure<Boolean> acceptor) {
         TarArchiveInputStream tarIn = null;
 
         tarIn = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(is)))
@@ -31,7 +31,7 @@ class UnTarJythonLib {
             TarArchiveEntry tarEntry = tarIn.getNextTarEntry()
             while (tarEntry != null) {
                 String entryName = substringAfterFirst(tarEntry.getName(), '/')
-                if (entryName.startsWith(packageName + '/')) {
+                if (acceptor(entryName)) {
                     File destPath = new File(output, entryName)
                     logger.debug("Writing: ${destPath.getCanonicalPath()}")
                     if (tarEntry.isDirectory()) {
@@ -59,6 +59,9 @@ class UnTarJythonLib {
             tarIn.close()
         }
     }
+
+
+    static Closure<Boolean> pythonModule(String name) { return { String entryName -> entryName.startsWith("$name/") } }
 
     static String substringAfterFirst(String orig, String ch) {
         assert ch.length() == 1

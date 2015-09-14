@@ -17,11 +17,13 @@ package com.hierynomus.gradle.plugins.jython.tasks
 
 import com.hierynomus.gradle.plugins.jython.JythonExtension
 import groovy.text.SimpleTemplateEngine
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.DefaultHttpClient
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.DependencyArtifact
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -38,8 +40,10 @@ class DownloadJythonDeps extends DefaultTask {
     @TaskAction
     def process() {
         project.configurations.getByName(configuration).allDependencies.withType(ExternalModuleDependency.class)*.each { d ->
-            String name = getNameOfModule(d)
+            String name = d.name
             logger.lifecycle("Downloading Jython library: $name with version ${d.version}")
+
+            def acceptClosure = getAcceptClosure(d)
 
             for (String repository : extension.sourceRepositories) {
                 def engine = new SimpleTemplateEngine()
@@ -53,18 +57,34 @@ class DownloadJythonDeps extends DefaultTask {
                 if (response.statusLine.statusCode == 200) {
                     logger.debug "Got response: ${response.statusLine}"
                     logger.debug "Response length: ${response.getFirstHeader('Content-Length')}"
-                    UnTarJythonLib.uncompressToOutputDir(response.entity.content, outputDir, name)
+                    UnTarJythonLib.uncompressToOutputDir(response.entity.content, outputDir, acceptClosure)
                     break
                 }
             }
         }
     }
 
-    String getNameOfModule(ExternalModuleDependency externalModuleDependency) {
-        if (externalModuleDependency.artifacts) {
-            return externalModuleDependency.artifacts.getAt(0).classifier
+    Closure<Boolean> getAcceptClosure(ExternalModuleDependency externalModuleDependency) {
+        def artifacts = externalModuleDependency.artifacts
+        if (!artifacts) {
+            UnTarJythonLib.pythonModule(externalModuleDependency.name)
+        } else if (artifacts.size() == 1 && artifacts[0].classifier) {
+            // Dealing with a renamed module
+            UnTarJythonLib.pythonModule(artifacts[0].classifier)
         } else {
-            return externalModuleDependency.name
+            // Dealing with explicit artifact(s)
+            def names = artifacts.collect(this.&asFileName)
+            return { String name -> names.contains(name) }
         }
+    }
+
+
+
+    def asFileName(DependencyArtifact artifact) {
+        String name = artifact.getName()
+        if (artifact.extension != null) {
+            name += ".${artifact.extension}"
+        }
+        return name
     }
 }

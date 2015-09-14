@@ -99,5 +99,8 @@ This will only add the `six.py` file from the downloaded module.
 
 == Changelog
 
-=== v0.1.0
+=== v0.2.0 (2015-09-14)
+- Added support for extracting a specific artifact from the dependency
+
+=== v0.1.0 (2015-09-11)
 - Initial version supporting `pypi` and `github` library locations

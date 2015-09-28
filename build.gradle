@@ -1,11 +1,22 @@
-plugins {
-    id "com.github.hierynomus.license" version "0.11.0"
-    id "com.jfrog.bintray" version "1.3.1"
+// First, apply the publishing plugin
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "com.gradle.publish:plugin-publish-plugin:0.9.1"
+  }
 }
 
+plugins {
+    id "com.github.hierynomus.license" version "0.11.0"
+}
+
+apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'groovy'
 apply plugin: 'idea'
-apply plugin: 'maven-publish'
 
 group = 'com.hierynomus.gradle.plugins'
 defaultTasks 'build'
@@ -62,73 +73,19 @@ test {
   }
 }
 
-def pomConfig = {
-    name project.name
-    description project.project_description
-    url project.project_url
-    inceptionYear '2015'
-
-    scm { url project.project_scm }
-
-    licenses {
-        license([:]) {
-            name 'The Apache Software License, Version 2.0'
-            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-            distribution 'repo'
-        }
-    }
-
-    developers {
-        developer {
-            id 'hierynomus'
-            name 'Jeroen van Erp'
-            url 'http://www.javadude.nl/'
-            email 'jeroen@hierynomus.com'
-            roles { role 'Developer' }
+pluginBundle {
+    website = project.project_url
+    vcsUrl = project.project_scm
+    description = project.project_description
+    plugins {
+        jythonPlugin {
+            id = "com.github.hierynomus.jython"
+            displayName = "Jython plugin for Gradle"
+            tags = [ "jython", "python" ]
         }
     }
 }
 
-publishing {
-    publications {
-        mavenCustom(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
-
-            pom.withXml {
-                asNode().children().last() + pomConfig
-            }
-        }
-    }
-}
-
-// Both 'bintrayUsername' and 'bintrayApiKey' must defined in the ~/.gradle/gradle.properties
-if (!project.hasProperty('bintrayUsername')) ext.bintrayUsername = 'invalid'
-if (!project.hasProperty('bintrayApiKey')) ext.bintrayApiKey = 'invalid'
-
-bintray {
-    user = project.bintrayUsername
-    key = project.bintrayApiKey
-    publications = ['mavenCustom']
-    pkg {
-        repo = project.project_bintray_repo
-        name = project.name
-        desc = project.project_description
-        licenses = ['Apache-2.0']
-        labels = ['gradle', 'plugin', 'license']
-        websiteUrl = project.project_url
-        issueTrackerUrl = project.project_issues_url
-        vcsUrl = project.project_scm
-        publicDownloadNumbers = true
-        version {
-            vcsTag = project.version
-            attributes = [
-                    'gradle-plugin': ['com.github.hierynomus.jython', project.group, project.name].join(':')
-            ]
-        }
-    }
-}
 
 if (!System.env.containsKey("JENKINS_URL")) {
     def javaVersion = System.properties['java.version']

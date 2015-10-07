@@ -17,7 +17,7 @@ package com.hierynomus.gradle.plugins.jython.tasks
 
 import com.hierynomus.gradle.plugins.jython.JythonExtension
 import groovy.text.SimpleTemplateEngine
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
@@ -57,7 +57,12 @@ class DownloadJythonDeps extends DefaultTask {
                 if (response.statusLine.statusCode == 200) {
                     logger.debug "Got response: ${response.statusLine}"
                     logger.debug "Response length: ${response.getFirstHeader('Content-Length')}"
-                    UnTarJythonLib.uncompressToOutputDir(response.entity.content, outputDir, acceptClosure)
+                    ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(repo.toString(), response)
+                    try {
+                        UnArchiveLib.uncompressToOutputDir(stream, outputDir, acceptClosure)
+                    } finally {
+                        stream.close()
+                    }
                     break
                 }
             }
@@ -67,18 +72,16 @@ class DownloadJythonDeps extends DefaultTask {
     Closure<Boolean> getAcceptClosure(ExternalModuleDependency externalModuleDependency) {
         def artifacts = externalModuleDependency.artifacts
         if (!artifacts) {
-            UnTarJythonLib.pythonModule(externalModuleDependency.name)
+            UnArchiveLib.pythonModule(externalModuleDependency.name)
         } else if (artifacts.size() == 1 && artifacts[0].classifier) {
             // Dealing with a renamed module
-            UnTarJythonLib.pythonModule(artifacts[0].classifier)
+            UnArchiveLib.pythonModule(artifacts[0].classifier)
         } else {
             // Dealing with explicit artifact(s)
             def names = artifacts.collect(this.&asFileName)
             return { String name -> names.contains(name) }
         }
     }
-
-
 
     def asFileName(DependencyArtifact artifact) {
         String name = artifact.getName()

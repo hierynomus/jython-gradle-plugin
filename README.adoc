@@ -99,6 +99,9 @@ This will only add the `six.py` file from the downloaded module.
 
 == Changelog
 
+=== v0.3.0 (2015-10-07)
+- Added support for .zip python modules
+
 === v0.2.0 (2015-09-14)
 - Added support for extracting a specific artifact from the dependency
 

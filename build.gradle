@@ -19,6 +19,7 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 
 group = 'com.hierynomus.gradle.plugins'
+version = "0.3.0"
 defaultTasks 'build'
 
 sourceCompatibility = 1.7
@@ -74,9 +75,9 @@ test {
 }
 
 pluginBundle {
-    website = project.project_url
-    vcsUrl = project.project_scm
-    description = project.project_description
+    website = "https://github.com/hierynomus/jython-gradle-plugin"
+    vcsUrl = "https://github.com/hierynomus/jython-gradle-plugin.git"
+    description = "Bundle Jython/Python libraries in your JAR"
     plugins {
         jythonPlugin {
             id = "com.github.hierynomus.jython"

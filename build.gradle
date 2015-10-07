@@ -19,7 +19,7 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 
 group = 'com.hierynomus.gradle.plugins'
-version = "0.3.0"
+version = "0.3.0-SNAPSHOT"
 defaultTasks 'build'
 
 sourceCompatibility = 1.7

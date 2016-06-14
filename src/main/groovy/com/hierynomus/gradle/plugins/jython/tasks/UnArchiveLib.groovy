@@ -20,14 +20,13 @@ import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
-import org.apache.http.HttpResponse
 import org.gradle.api.logging.Logging
 
 class UnArchiveLib {
     static final def logger = Logging.getLogger(UnArchiveLib.class)
 
-    static def getArchiveInputStream(String repo, HttpResponse response) {
-        def buffered = new BufferedInputStream(response.entity.content)
+    static def getArchiveInputStream(String repo, def body) {
+        def buffered = new BufferedInputStream(body as InputStream)
         if (repo.endsWith(".zip")) {
             return new ZipArchiveInputStream(buffered)
         } else if (repo.endsWith(".tar.gz")) {

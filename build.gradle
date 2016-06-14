@@ -1,13 +1,13 @@
 // First, apply the publishing plugin
 buildscript {
-  repositories {
-    maven {
-      url "https://plugins.gradle.org/m2/"
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
-  }
-  dependencies {
-    classpath "com.gradle.publish:plugin-publish-plugin:0.9.1"
-  }
+    dependencies {
+        classpath "com.gradle.publish:plugin-publish-plugin:0.9.1"
+    }
 }
 
 plugins {
@@ -17,6 +17,7 @@ plugins {
 apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'groovy'
 apply plugin: 'idea'
+apply plugin: 'java-gradle-plugin'
 
 group = 'com.hierynomus.gradle.plugins'
 version = "0.3.0-SNAPSHOT"
@@ -25,7 +26,9 @@ defaultTasks 'build'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
-repositories { jcenter() }
+repositories {
+    jcenter()
+}
 
 idea {
     module {
@@ -38,13 +41,15 @@ configurations.compile.transitive = false
 
 dependencies {
     compile gradleApi()
+//    compile "org.apache.httpcomponents:httpclient:4.5.1"
+//    compile "org.apache.httpcomponents:httpclient:4.5.2"
+    compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
     compile "org.apache.commons:commons-compress:1.10"
 
     testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
         exclude group: 'org.codehaus.groovy', module: 'groovy-all'
     }
     testCompile 'com.xebialabs.restito:restito:0.7'
-//    testCompile gradleTestKit()
 }
 
 // This disables the pedantic doclint feature of JDK8
@@ -65,13 +70,13 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 test {
-  afterSuite { descriptor, result ->
-    def indicator = "\u001B[32m✓\u001b[0m"
-    if (result.failedTestCount > 0) {
-      indicator = "\u001B[31m✘\u001b[0m"
+    afterSuite { descriptor, result ->
+        def indicator = "\u001B[32m✓\u001b[0m"
+        if (result.failedTestCount > 0) {
+            indicator = "\u001B[31m✘\u001b[0m"
+        }
+        logger.lifecycle("$indicator Test ${descriptor.name}; Executed: ${result.testCount}/\u001B[32m${result.successfulTestCount}\u001B[0m/\u001B[31m${result.failedTestCount}\u001B[0m")
     }
-    logger.lifecycle("$indicator Test ${descriptor.name}; Executed: ${result.testCount}/\u001B[32m${result.successfulTestCount}\u001B[0m/\u001B[31m${result.failedTestCount}\u001B[0m")
-  }
 }
 
 pluginBundle {
@@ -82,7 +87,7 @@ pluginBundle {
         jythonPlugin {
             id = "com.github.hierynomus.jython"
             displayName = "Jython plugin for Gradle"
-            tags = [ "jython", "python" ]
+            tags = ["jython", "python"]
         }
     }
 }

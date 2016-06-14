@@ -17,11 +17,10 @@ package com.hierynomus.gradle.plugins.jython.tasks
 
 import com.hierynomus.gradle.plugins.jython.JythonExtension
 import groovy.text.SimpleTemplateEngine
+import groovyx.net.http.HTTPBuilder
+import groovyx.net.http.Method
 import org.apache.commons.compress.archivers.ArchiveInputStream
-import org.apache.http.HttpResponse
-import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.DefaultHttpClient
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.DependencyArtifact
 import org.gradle.api.artifacts.ExternalModuleDependency
@@ -50,21 +49,24 @@ class DownloadJythonDeps extends DefaultTask {
                 def template = engine.createTemplate(repository)
                 def repo = template.make(['dep': d])
                 logger.lifecycle("Trying: $repo")
+                boolean found = false
 
-                HttpGet req = new HttpGet(repo.toString())
-                HttpClient client = new DefaultHttpClient()
-                HttpResponse response = client.execute(req)
-                if (response.statusLine.statusCode == 200) {
-                    logger.debug "Got response: ${response.statusLine}"
-                    logger.debug "Response length: ${response.getFirstHeader('Content-Length')}"
-                    ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(repo.toString(), response)
-                    try {
-                        UnArchiveLib.uncompressToOutputDir(stream, outputDir, acceptClosure)
-                    } finally {
-                        stream.close()
+                def http = new HTTPBuilder(repo.toString())
+                http.request(Method.GET) {
+                    response.success = { resp, body ->
+                        logger.debug "Got response: ${resp.statusLine}"
+                        logger.debug "Response length: ${resp.getFirstHeader('Content-Length')}"
+                        ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(repo.toString(), body)
+                        try {
+                            UnArchiveLib.uncompressToOutputDir(stream, outputDir, acceptClosure)
+                        } finally {
+                            stream.close()
+                        }
+                        found = true
                     }
-                    break
                 }
+
+                if (found) break
             }
         }
     }

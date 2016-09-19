@@ -1,18 +1,20 @@
 // First, apply the publishing plugin
 buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
     }
-    dependencies {
-        classpath "com.gradle.publish:plugin-publish-plugin:0.9.1"
-    }
+  }
+  dependencies {
+    classpath "com.gradle.publish:plugin-publish-plugin:0.9.1"
+  }
 }
 
 plugins {
-    id "com.github.hierynomus.license" version "0.11.0"
+  id "com.github.hierynomus.license" version "0.12.1"
+  id "org.ajoberstar.release-opinion" version "1.4.2"
 }
+
 
 apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'groovy'
@@ -20,7 +22,6 @@ apply plugin: 'idea'
 apply plugin: 'java-gradle-plugin'
 
 group = 'com.hierynomus.gradle.plugins'
-version = "0.3.0-SNAPSHOT"
 defaultTasks 'build'
 
 sourceCompatibility = 1.7
@@ -29,6 +30,20 @@ targetCompatibility = 1.7
 repositories {
     jcenter()
 }
+
+license {
+  header rootProject.file('LICENSE')
+  strictCheck true
+  mapping {
+    java = 'SLASHSTAR_STYLE'
+  }
+  excludes(['com/hierynomus/protocol/commons/Base64.java', '**/*.txt', '**/*.properties'])
+}
+
+release {
+  grgit = org.ajoberstar.grgit.Grgit.open(project.projectDir)
+}
+
 
 idea {
     module {
@@ -40,16 +55,16 @@ idea {
 configurations.compile.transitive = false
 
 dependencies {
-    compile gradleApi()
-//    compile "org.apache.httpcomponents:httpclient:4.5.1"
+  compile gradleApi()
+//   compile "org.apache.httpcomponents:httpclient:4.5.1"
 //    compile "org.apache.httpcomponents:httpclient:4.5.2"
-    compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
-    compile "org.apache.commons:commons-compress:1.10"
+  compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+  compile "org.apache.commons:commons-compress:1.10"
 
-    testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
-        exclude group: 'org.codehaus.groovy', module: 'groovy-all'
-    }
-    testCompile 'com.xebialabs.restito:restito:0.7'
+  testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
+    exclude group: 'org.codehaus.groovy', module: 'groovy-all'
+  }
+  testCompile 'com.xebialabs.restito:restito:0.7'
 }
 
 // This disables the pedantic doclint feature of JDK8
@@ -94,8 +109,10 @@ pluginBundle {
 
 
 if (!System.env.containsKey("JENKINS_URL")) {
-    def javaVersion = System.properties['java.version']
-    if (JavaVersion.toVersion(javaVersion) != project.targetCompatibility) {
-//        throw new GradleException("Expected Java version ${project.targetCompatibility} but running with $javaVersion")
-    }
+  def javaVersion = System.properties['java.version']
+  if (JavaVersion.toVersion(javaVersion) != project.targetCompatibility) {
+//  throw new GradleException("Expected Java version ${project.targetCompatibility} but running with $javaVersion")
+  }
 }
+
+project.tasks.release.dependsOn(project.tasks.publishPlugins)

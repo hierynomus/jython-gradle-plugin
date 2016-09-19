@@ -99,6 +99,9 @@ This will only add the `six.py` file from the downloaded module.
 
 == Changelog
 
+=== v0.4.0 (2015-10-07)
+- Converted download code from Apache HTTP to Groovy HTTP-Builder (Fixes https://github.com/hierynomus/jython-gradle-plugin/issues/7[#7])
+
 === v0.3.0 (2015-10-07)
 - Added support for .zip python modules
 

@@ -42,14 +42,13 @@ class DownloadJythonDeps extends DefaultTask {
         project.configurations.getByName(configuration).allDependencies.withType(ExternalModuleDependency.class)*.each { d ->
             String name = d.name
             logger.lifecycle("Downloading Jython library: $name with version ${d.version}")
-            logger.debug("BLARGH")
 
             def acceptClosure = getAcceptClosure(d)
 
             for (String repository : extension.sourceRepositories) {
                 def releaseUrl = getReleaseUrl(repository, d)
-                if(releaseUrl) {
-                    logger.lifecycle("Trying: $releaseUrl")
+                if (releaseUrl) {
+                    logger.info("Trying: $releaseUrl")
 
                     boolean found = false
                     def http = new HTTPBuilder(releaseUrl)
@@ -74,15 +73,17 @@ class DownloadJythonDeps extends DefaultTask {
     }
 
     def getReleaseUrl(String repository, ExternalModuleDependency d) {
-        if(repository == 'pipy') {
-            def queryHttp = new HTTPBuilder("https://pypi.python.org/pypi/${d.name}/json")
+        if (repository == 'pipy') {
+            def queryUrl = "https://pypi.python.org/pypi/${d.name}/json"
+            logger.info("Querying PyPI: $queryUrl")
+            def queryHttp = new HTTPBuilder(queryUrl)
             queryHttp.request(Method.GET, ContentType.JSON) {
                 response.success = { resp, json ->
-                    if(json.releases) {
+                    if (json.releases) {
                         def release_urls = json.releases[d.version]
-                        if(release_urls) {
-                            for(u in release_urls) {
-                                if(u['python_version'] == 'source') {
+                        if (release_urls) {
+                            for (u in release_urls) {
+                                if (u['python_version'] == 'source') {
                                     return u['url']
                                 }
                             }

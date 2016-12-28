@@ -34,7 +34,7 @@ class JythonPluginIntegrationTest extends Specification {
     }
 
     @Unroll
-    def "can execute hello world task with Gradle version #gradleVersion"() {
+    def "can download package #dep with Gradle version #gradleVersion"() {
         given:
         buildFile << """
 plugins {
@@ -43,7 +43,7 @@ plugins {
 }
 
 dependencies {
-  jython ":boto3:1.1.3"
+  jython "$dep"
 }"""
 
         when:
@@ -51,7 +51,7 @@ dependencies {
                 .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.root)
                 .withPluginClasspath()
-                .withArguments('-i', '-s', 'jythonDownload')
+                .withArguments('-i', '-s', '-d', 'jythonDownload')
                 .build()
 
         then:
@@ -59,7 +59,11 @@ dependencies {
         result.task(":jythonDownload").outcome == TaskOutcome.SUCCESS
 
         where:
-        gradleVersion << ['2.11', '2.12']
+        gradleVersion | dep
+        '2.11' | ':boto3:1.1.3'
+        '2.11' |  ':docker:2.0.0'
+        '2.12' | ':boto3:1.1.3'
+        '2.12' |  ':docker:2.0.0'
     }
 
 }

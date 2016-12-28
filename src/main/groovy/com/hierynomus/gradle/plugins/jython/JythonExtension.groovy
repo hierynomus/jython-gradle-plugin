@@ -18,8 +18,8 @@ package com.hierynomus.gradle.plugins.jython
 class JythonExtension {
 
     def sourceRepositories = [
-            'https://pypi.python.org/packages/source/${dep.name[0]}/${dep.name}/${dep.name}-${dep.version}.tar.gz',
-            'https://pypi.python.org/packages/source/${dep.name[0]}/${dep.name}/${dep.name}-${dep.version}.zip',
+            'pipy',
             'https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz'
     ]
+
 }

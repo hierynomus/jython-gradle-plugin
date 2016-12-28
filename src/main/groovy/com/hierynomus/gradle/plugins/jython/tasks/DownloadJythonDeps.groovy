@@ -19,6 +19,7 @@ import com.hierynomus.gradle.plugins.jython.JythonExtension
 import groovy.text.SimpleTemplateEngine
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import groovyx.net.http.ContentType
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.http.client.methods.HttpGet
 import org.gradle.api.DefaultTask
@@ -41,33 +42,58 @@ class DownloadJythonDeps extends DefaultTask {
         project.configurations.getByName(configuration).allDependencies.withType(ExternalModuleDependency.class)*.each { d ->
             String name = d.name
             logger.lifecycle("Downloading Jython library: $name with version ${d.version}")
+            logger.debug("BLARGH")
 
             def acceptClosure = getAcceptClosure(d)
 
             for (String repository : extension.sourceRepositories) {
-                def engine = new SimpleTemplateEngine()
-                def template = engine.createTemplate(repository)
-                def repo = template.make(['dep': d])
-                logger.lifecycle("Trying: $repo")
-                boolean found = false
+                def releaseUrl = getReleaseUrl(repository, d)
+                if(releaseUrl) {
+                    logger.lifecycle("Trying: $releaseUrl")
 
-                def http = new HTTPBuilder(repo.toString())
-                http.request(Method.GET) {
-                    response.success = { resp, body ->
-                        logger.debug "Got response: ${resp.statusLine}"
-                        logger.debug "Response length: ${resp.getFirstHeader('Content-Length')}"
-                        ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(repo.toString(), body)
-                        try {
-                            UnArchiveLib.uncompressToOutputDir(stream, outputDir, acceptClosure)
-                        } finally {
-                            stream.close()
+                    boolean found = false
+                    def http = new HTTPBuilder(releaseUrl)
+                    http.request(Method.GET) {
+                        response.success = { resp, body ->
+                            logger.debug "Got response: ${resp.statusLine}"
+                            logger.debug "Response length: ${resp.getFirstHeader('Content-Length')}"
+                            ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(releaseUrl, body)
+                            try {
+                                UnArchiveLib.uncompressToOutputDir(stream, outputDir, acceptClosure)
+                            } finally {
+                                stream.close()
+                            }
+                            found = true
                         }
-                        found = true
+                    }
+
+                    if (found) break
+                }
+            }
+        }
+    }
+
+    def getReleaseUrl(String repository, ExternalModuleDependency d) {
+        if(repository == 'pipy') {
+            def queryHttp = new HTTPBuilder("https://pypi.python.org/pypi/${d.name}/json")
+            queryHttp.request(Method.GET, ContentType.JSON) {
+                response.success = { resp, json ->
+                    if(json.releases) {
+                        def release_urls = json.releases[d.version]
+                        if(release_urls) {
+                            for(u in release_urls) {
+                                if(u['python_version'] == 'source') {
+                                    return u['url']
+                                }
+                            }
+                        }
                     }
                 }
-
-                if (found) break
             }
+        } else {
+            def engine = new SimpleTemplateEngine()
+            def template = engine.createTemplate(repository)
+            return template.make(['dep': d]).toString()
         }
     }
 

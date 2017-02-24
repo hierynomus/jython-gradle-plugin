@@ -42,8 +42,11 @@ class JythonPluginTest extends Specification {
         projectDir.mkdirs()
         project = ProjectBuilder.builder().withProjectDir(projectDir).withName("test").build()
         project.apply plugin: 'jython'
-        project.jython.sourceRepositories = ['http://localhost:' + server.getPort() + '/${dep.group}/${dep.name}/${dep.name}-${dep.version}.tar.gz']
+        project.jython.sourceRepositories = [
+                'http://localhost:' + server.getPort() + '/${dep.group}/${dep.name}/${dep.name}-${dep.version}.tar.gz',
+                'http://localhost:' + server.getPort() + '/${dep.group}/${dep.name}/${dep.name}-${dep.version}.zip']
         whenHttp(server).match(get("/test/pylib/pylib-0.1.0.tar.gz")).then(ok(), resourceContent("pylib-0.1.0.tar.gz"))
+        whenHttp(server).match(get("/test/otherlib/otherlib-0.1.0.zip")).then(ok(), resourceContent("otherlib-0.1.0.zip"))
     }
 
     def cleanup() {
@@ -62,6 +65,20 @@ class JythonPluginTest extends Specification {
 
         then:
         new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+        !new File(project.buildDir, "jython/main/requirements.txt").exists()
+    }
+
+    def "should download jython library dependency not containing directory structure"() {
+        setup:
+        project.dependencies {
+            jython "test:otherlib:0.1.0"
+        }
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        new File(project.buildDir, "jython/main/otherlib/__init__.py").exists()
         !new File(project.buildDir, "jython/main/requirements.txt").exists()
     }
 

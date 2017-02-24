@@ -46,6 +46,9 @@ class UnArchiveLib {
                 if (entry.isDirectory()) {
                     destPath.mkdirs()
                 } else {
+                    if (!destPath.getParentFile().exists()) {
+                        destPath.getParentFile().mkdirs()
+                    }
                     destPath.createNewFile()
                     byte[] btoRead = new byte[1024]
                     BufferedOutputStream bout = new BufferedOutputStream(new FileOutputStream(destPath))

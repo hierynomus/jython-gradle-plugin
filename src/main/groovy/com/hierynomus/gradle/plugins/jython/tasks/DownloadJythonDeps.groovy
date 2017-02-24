@@ -27,6 +27,7 @@ import org.gradle.api.artifacts.DependencyArtifact
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskExecutionException
 
 class DownloadJythonDeps extends DefaultTask {
 
@@ -45,12 +46,12 @@ class DownloadJythonDeps extends DefaultTask {
 
             def acceptClosure = getAcceptClosure(d)
 
+            boolean found = false
             for (String repository : extension.sourceRepositories) {
                 def releaseUrl = getReleaseUrl(repository, d)
                 if (releaseUrl) {
                     logger.info("Trying: $releaseUrl")
 
-                    boolean found = false
                     def http = new HTTPBuilder(releaseUrl)
                     http.request(Method.GET) {
                         response.success = { resp, body ->
@@ -64,10 +65,17 @@ class DownloadJythonDeps extends DefaultTask {
                             }
                             found = true
                         }
+                        response.failure = { resp, body ->
+                            logger.info("Got response: ${resp.statusLine} for url: $releaseUrl, trying next...")
+                        }
                     }
 
                     if (found) break
                 }
+            }
+
+            if (!found) {
+                throw new IllegalArgumentException("Could not find Jython library $d")
             }
         }
     }

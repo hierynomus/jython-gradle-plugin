@@ -15,10 +15,13 @@
  */
 package com.hierynomus.gradle.plugins.jython
 
+import com.hierynomus.gradle.plugins.jython.dependency.PythonDependency
 import com.hierynomus.gradle.plugins.jython.tasks.DownloadJythonDeps
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.util.ConfigureUtil
 
 class JythonPlugin implements Plugin<Project> {
     static final RUNTIME_SCOPE_CONFIGURATION = "jython"
@@ -32,22 +35,44 @@ class JythonPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
         configureProject(project)
+        File cacheDir = createPythonCacheDir(project)
+        extension.pyCacheDir = cacheDir
+
         createTasks(project)
 
         project.plugins.withType(JavaPlugin) {
-            project.sourceSets.main.resources.srcDirs += project.tasks.getByName(RUNTIME_DEP_DOWNLOAD).asType(DownloadJythonDeps).outputDir
+            project.sourceSets.main.resources.srcDirs += (project.tasks.getByName(RUNTIME_DEP_DOWNLOAD) as DownloadJythonDeps).outputDir
             project.tasks.getByName(JavaPlugin.PROCESS_RESOURCES_TASK_NAME).configure {
                 dependsOn project.tasks.getByName(RUNTIME_DEP_DOWNLOAD)
             }
 
-            project.sourceSets.test.resources.srcDirs += project.tasks.getByName(TEST_DEP_DOWNLOAD).asType(DownloadJythonDeps).outputDir
+            project.sourceSets.test.resources.srcDirs += (project.tasks.getByName(TEST_DEP_DOWNLOAD) as DownloadJythonDeps).outputDir
             project.tasks.getByName(JavaPlugin.PROCESS_TEST_RESOURCES_TASK_NAME).configure {
                 dependsOn project.tasks.getByName(TEST_DEP_DOWNLOAD)
             }
         }
     }
 
+    File createPythonCacheDir(Project project) {
+        def dir = project.gradle.gradleUserHomeDir
+        def pyCacheDir = new File(dir, "python")
+        if (!pyCacheDir.exists()) {
+            pyCacheDir.mkdir()
+        }
+        return pyCacheDir
+    }
+
     def configureProject(Project project) {
+        DefaultDependencyHandler.metaClass.python { depInfo ->
+            return PythonDependency.create(depInfo, project)
+        }
+
+        DefaultDependencyHandler.metaClass.python { depInfo, closure ->
+            PythonDependency dep = PythonDependency.create(depInfo, project)
+            ConfigureUtil.configure(closure, dep)
+            return dep
+        }
+
         project.configurations.create(RUNTIME_SCOPE_CONFIGURATION)
         project.configurations.create(TEST_SCOPE_CONFIGURATION)
         extension = project.extensions.create("jython", JythonExtension)

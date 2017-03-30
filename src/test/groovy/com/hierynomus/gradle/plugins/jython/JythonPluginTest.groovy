@@ -131,6 +131,25 @@ class JythonPluginTest extends Specification {
         new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
     }
 
+    def "should support getting a single file from the module directory"() {
+        setup:
+        project.dependencies {
+            jython("test:pylib:0.1.0") {
+                artifact {
+                    name = "pylib/other-artifact"
+                    extension = "py"
+                }
+            }
+        }
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        !new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+        new File(project.buildDir, "jython/main/pylib/other-artifact.py").exists()
+    }
+
     def "should support getting a single file from the tar.gz"() {
         setup:
         project.dependencies {
@@ -149,6 +168,39 @@ class JythonPluginTest extends Specification {
         !new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
         new File(project.buildDir, "jython/main/artifact.py").exists()
     }
+
+    def "should work with new PythonDependency"() {
+        setup:
+        project.dependencies {
+            jython python("test:pylib:0.1.0")
+        }
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+    }
+
+//    def "should use copySpec attached to PythonDependency for extraction"() {
+//        setup:
+//        project.apply plugin: 'java'
+//        project.dependencies {
+//            jython python("test:pylib:0.1.0") {
+//                copy {
+//                    from "src/sublib"
+//                }
+//            }
+//        }
+//
+//        when:
+//        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+//
+//        then:
+//        !new File(project.buildDir, "jython/main/src/sublib/__init__.py").exists()
+//        new File(project.buildDir, "jython/main/sublib/__init__.py").exists()
+//    }
+//
 
     List<String> getEntriesOfJar(File archive) {
         def stream = new JarArchiveInputStream(new FileInputStream(archive))

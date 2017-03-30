@@ -16,6 +16,8 @@
 package com.hierynomus.gradle.plugins.jython.tasks
 
 import com.hierynomus.gradle.plugins.jython.JythonExtension
+import com.hierynomus.gradle.plugins.jython.dependency.PythonDependency
+import com.hierynomus.gradle.plugins.jython.repository.Repository
 import groovy.text.SimpleTemplateEngine
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
@@ -41,68 +43,39 @@ class DownloadJythonDeps extends DefaultTask {
     @TaskAction
     def process() {
         project.configurations.getByName(configuration).allDependencies.withType(ExternalModuleDependency.class)*.each { d ->
-            String name = d.name
-            logger.lifecycle("Downloading Jython library: $name with version ${d.version}")
+            PythonDependency pd
+            if (!(d instanceof PythonDependency)) {
+                pd = PythonDependency.create(d, getProject())
+                // TODO convert the artifacts/classifier to copySpec notation
+                pd.artifacts = d.artifacts
+            } else {
+                pd = d as PythonDependency
+            }
 
-            def acceptClosure = getAcceptClosure(d)
+            String name = pd.name
+            logger.lifecycle("Downloading Jython library: $name with version ${pd.version}")
+            // TODO replace acceptClosure with copySpec
+            def acceptClosure = getAcceptClosure(pd)
 
             boolean found = false
-            for (String repository : extension.sourceRepositories) {
-                def releaseUrl = getReleaseUrl(repository, d)
-                if (releaseUrl) {
-                    logger.info("Trying: $releaseUrl")
-
-                    def http = new HTTPBuilder(releaseUrl)
-                    http.request(Method.GET) {
-                        response.success = { resp, body ->
-                            logger.debug "Got response: ${resp.statusLine}"
-                            logger.debug "Response length: ${resp.getFirstHeader('Content-Length')}"
-                            ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(releaseUrl, body)
-                            try {
-                                UnArchiveLib.uncompressToOutputDir(stream, outputDir, acceptClosure)
-                            } finally {
-                                stream.close()
-                            }
-                            found = true
-                        }
-                        response.failure = { resp, body ->
-                            logger.info("Got response: ${resp.statusLine} for url: $releaseUrl, trying next...")
-                        }
+            for (Repository r : extension.sourceRepositories) {
+                File cachedDep = r.resolve(extension.pyCacheDir, pd)
+                if (cachedDep) {
+                    ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(cachedDep)
+                    try {
+                        UnArchiveLib.uncompressToOutputDir(stream, outputDir, acceptClosure)
+                    } finally {
+                        stream.close()
                     }
-
-                    if (found) break
+                    found = true
                 }
+
+                if (found) break
             }
 
             if (!found) {
                 throw new IllegalArgumentException("Could not find Jython library $d")
             }
-        }
-    }
-
-    def getReleaseUrl(String repository, ExternalModuleDependency d) {
-        if (repository == 'pipy') {
-            def queryUrl = "https://pypi.python.org/pypi/${d.name}/json"
-            logger.info("Querying PyPI: $queryUrl")
-            def queryHttp = new HTTPBuilder(queryUrl)
-            queryHttp.request(Method.GET, ContentType.JSON) {
-                response.success = { resp, json ->
-                    if (json.releases) {
-                        def release_urls = json.releases[d.version]
-                        if (release_urls) {
-                            for (u in release_urls) {
-                                if (u['python_version'] == 'source') {
-                                    return u['url']
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            def engine = new SimpleTemplateEngine()
-            def template = engine.createTemplate(repository)
-            return template.make(['dep': d]).toString()
         }
     }
 

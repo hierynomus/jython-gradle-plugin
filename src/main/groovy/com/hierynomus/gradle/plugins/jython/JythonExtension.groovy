@@ -15,11 +15,31 @@
  */
 package com.hierynomus.gradle.plugins.jython
 
+import com.hierynomus.gradle.plugins.jython.repository.PypiRepository
+import com.hierynomus.gradle.plugins.jython.repository.Repository
+import com.hierynomus.gradle.plugins.jython.repository.UrlRepository
+
 class JythonExtension {
 
+    File pyCacheDir
+
     def sourceRepositories = [
-            'pipy',
-            'https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz'
+            new PypiRepository(),
+            new UrlRepository('https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz')
     ]
 
+    void setSourceRepositories(Collection sourceRepositories) {
+        this.sourceRepositories = []
+        sourceRepositories.forEach({ r ->
+            if (r instanceof String && r == "pypi") {
+                this.sourceRepositories.add(new PypiRepository())
+            } else if (r instanceof String) {
+                this.sourceRepositories.add(new UrlRepository(r))
+            } else if (r instanceof Repository) {
+                this.sourceRepositories.add(r)
+            } else {
+                throw new IllegalArgumentException("Don't know how to convert $r to Repository")
+            }
+        })
+    }
 }

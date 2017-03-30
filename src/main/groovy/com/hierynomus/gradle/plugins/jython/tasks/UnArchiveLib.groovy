@@ -25,14 +25,14 @@ import org.gradle.api.logging.Logging
 class UnArchiveLib {
     static final def logger = Logging.getLogger(UnArchiveLib.class)
 
-    static def getArchiveInputStream(String repo, def body) {
-        def buffered = new BufferedInputStream(body as InputStream)
-        if (repo.endsWith(".zip")) {
+    static def getArchiveInputStream(File cachedDep) {
+        def buffered = new BufferedInputStream(new FileInputStream(cachedDep))
+        if (cachedDep.name.endsWith(".zip")) {
             return new ZipArchiveInputStream(buffered)
-        } else if (repo.endsWith(".tar.gz")) {
+        } else if (cachedDep.name.endsWith(".tar.gz")) {
             return new TarArchiveInputStream(new GzipCompressorInputStream(buffered))
         } else {
-            throw new IllegalArgumentException("Could not determine correct archive format for $repo")
+            throw new IllegalArgumentException("Could not determine correct archive format for $cachedDep")
         }
     }
 

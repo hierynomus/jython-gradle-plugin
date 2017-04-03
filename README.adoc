@@ -70,7 +70,26 @@ jython {
 }
 ----
 
-== Non-default libraries/modules
+== INCUBATING (0.5.x) Non-default libraries/modules
+
+=== If a python module name differs from the artifact name.
+In some cases, the python module name is not the same as the artifact name. In order to overcome this, you can convert the dependency to a `PythonDependency` and configure the `moduleName` accordingly.
+
+[source,groovy,subs="verbatim,attributes"]
+----
+dependencies {
+  jython python("jmespath:jmespath.py:0.7.1") {
+    moduleName = "jmespath"
+  }
+  jython python(":python-dateutil:2.4.2") {
+    moduleName = "dateutil"
+  }
+}
+----
+
+=== If you only need to include specific file(s) or directories from the module
+
+== OLD (pre 0.5.x): Non-default libraries/modules
 
 === If a python module name differs from the artifact name.
 In some cases, the python module name is not the same as the artifact name. In order to overcome this, you can use the `classifier` of the dependency to set the correct module name used for extraction. For instance:
@@ -89,16 +108,19 @@ In some cases, the python script(s) are not bundled in a python module directory
 [source,groovy,subs="verbatim,attributes"]
 ----
 dependencies {
-  jython(":six:1.9.0") {
-    artifact {
-      name = "six"
-      extension = "py"
+  jython python(":six:1.9.0") {
+    useModuleName = false // Copy not to moduleName 'six', but rather to the root
+    copy {
+      from "six.py" // Will only copy six.py
+    }
+  }
+  jython python(":isodate:0.5.4") {
+    copy {
+      from "src/isodate" // Will copy the contents of the directory into the module directory
     }
   }
 }
 ----
-
-This will only add the `six.py` file from the downloaded module.
 
 == Changelog
 

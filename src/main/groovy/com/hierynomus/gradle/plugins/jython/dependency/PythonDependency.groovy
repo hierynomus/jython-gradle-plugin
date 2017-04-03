@@ -15,14 +15,14 @@
  */
 package com.hierynomus.gradle.plugins.jython.dependency
 
-import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.internal.artifacts.dependencies.AbstractExternalModuleDependency
+import org.gradle.util.ConfigureUtil
 
 class PythonDependency extends AbstractExternalModuleDependency {
     String moduleName
-    List<String> toCopy = []
+    List<CopiedArtifact> toCopy = []
     boolean useModuleName = true
 
     PythonDependency(String group, String name, String version, String configuration) {
@@ -68,8 +68,11 @@ class PythonDependency extends AbstractExternalModuleDependency {
         }
     }
 
-    void copy(String toCopy) {
-        this.toCopy.add(toCopy)
+    PythonDependency copy(Closure c) {
+        def ca = new CopiedArtifact()
+        ConfigureUtil.configure(c, ca)
+        this.toCopy.add(ca)
+        this
     }
 
     @Override
@@ -86,5 +89,38 @@ class PythonDependency extends AbstractExternalModuleDependency {
 
     void setUseModuleName(boolean useModuleName) {
         this.useModuleName = useModuleName
+    }
+
+    void setModuleName(String moduleName) {
+        this.moduleName = moduleName
+    }
+
+    static class CopiedArtifact {
+        String from
+        String into
+
+        def from(String s) {
+            this.from = s
+        }
+
+        def into(String s) {
+            this.into = s
+        }
+
+        String getFrom() {
+            return from
+        }
+
+        void setFrom(String from) {
+            this.from = from
+        }
+
+        String getInto() {
+            return into
+        }
+
+        void setInto(String into) {
+            this.into = into
+        }
     }
 }

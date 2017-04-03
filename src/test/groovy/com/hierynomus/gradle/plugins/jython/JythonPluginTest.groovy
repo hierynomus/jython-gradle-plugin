@@ -187,8 +187,11 @@ class JythonPluginTest extends Specification {
         setup:
         project.apply plugin: 'java'
         project.dependencies {
-            jython python("test:pylib:0.1.0:sublib") {
-                copy "src/sublib"
+            jython python("test:pylib:0.1.0") {
+                moduleName = "sublib"
+                copy {
+                    from "src/sublib"
+                }
             }
         }
 
@@ -197,6 +200,28 @@ class JythonPluginTest extends Specification {
 
         then:
         !new File(project.buildDir, "jython/main/src/sublib/__init__.py").exists()
+        new File(project.buildDir, "jython/main/sublib/__init__.py").exists()
+    }
+
+    def "should define from/info to copy in PythonDependency for extraction"() {
+        setup:
+        project.apply plugin: 'java'
+        project.dependencies {
+            jython python("test:pylib:0.1.0") {
+                useModuleName = false
+                copy {
+                    from "src/sublib"
+                    into "sublib"
+                }
+            }
+        }
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        !new File(project.buildDir, "jython/main/src/sublib/__init__.py").exists()
+        !new File(project.buildDir, "jython/main/__init__.py").exists()
         new File(project.buildDir, "jython/main/sublib/__init__.py").exists()
     }
 

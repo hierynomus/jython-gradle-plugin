@@ -53,15 +53,19 @@ class UnArchiveLib {
             }
 
             if (pd.toCopy) {
+                def dir = "${outputDir}"
+                if (pd.useModuleName) {
+                    dir = "${dir}/${pd.moduleName}"
+                }
                 project.copy { cs ->
-                    if (pd.useModuleName) {
-                        cs.into "${outputDir}/${pd.moduleName}"
-                    } else {
-                        cs.into "${outputDir}"
-                    }
+                    cs.into dir
 
                     pd.toCopy.each { c ->
-                        cs.from(new File(tempDir, c))
+                        cs.from(new File(tempDir, c.from)) {
+                            if (c.into) {
+                                into(c.into)
+                            }
+                        }
                     }
                 }
             } else {

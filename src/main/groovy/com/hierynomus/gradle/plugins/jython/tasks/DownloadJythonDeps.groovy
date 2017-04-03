@@ -18,21 +18,17 @@ package com.hierynomus.gradle.plugins.jython.tasks
 import com.hierynomus.gradle.plugins.jython.JythonExtension
 import com.hierynomus.gradle.plugins.jython.dependency.PythonDependency
 import com.hierynomus.gradle.plugins.jython.repository.Repository
-import groovy.text.SimpleTemplateEngine
-import groovyx.net.http.HTTPBuilder
-import groovyx.net.http.Method
-import groovyx.net.http.ContentType
 import org.apache.commons.compress.archivers.ArchiveInputStream
-import org.apache.http.client.methods.HttpGet
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.DependencyArtifact
 import org.gradle.api.artifacts.ExternalModuleDependency
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.TaskExecutionException
 
 class DownloadJythonDeps extends DefaultTask {
 
+    @Input
     String configuration
 
     JythonExtension extension
@@ -43,31 +39,25 @@ class DownloadJythonDeps extends DefaultTask {
     @TaskAction
     def process() {
         project.configurations.getByName(configuration).allDependencies.withType(ExternalModuleDependency.class)*.each { d ->
-            PythonDependency pd
-            if (!(d instanceof PythonDependency)) {
-                pd = PythonDependency.create(d, getProject())
-                // TODO convert the artifacts/classifier to copySpec notation
-                pd.artifacts = d.artifacts
-            } else {
-                pd = d as PythonDependency
-            }
-
-            String name = pd.name
-            logger.lifecycle("Downloading Jython library: $name with version ${pd.version}")
-            // TODO replace acceptClosure with copySpec
-            def acceptClosure = getAcceptClosure(pd)
-
+            String name = d.name
+            logger.lifecycle("Downloading Jython library: $name with version ${d.version}")
             boolean found = false
             for (Repository r : extension.sourceRepositories) {
-                File cachedDep = r.resolve(extension.pyCacheDir, pd)
+                File cachedDep = r.resolve(extension.pyCacheDir, d)
                 if (cachedDep) {
-                    ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(cachedDep)
-                    try {
-                        UnArchiveLib.uncompressToOutputDir(stream, outputDir, acceptClosure)
-                    } finally {
-                        stream.close()
-                    }
                     found = true
+
+                    if (!(d instanceof PythonDependency)) {
+                        ArchiveInputStream stream = UnArchiveLib.getArchiveInputStream(cachedDep)
+                        try {
+                            UnArchiveLib.uncompressToOutputDir(stream, outputDir, getAcceptClosure(d))
+                        } finally {
+                            stream.close()
+                        }
+                    } else {
+                        PythonDependency pd = d as PythonDependency
+                        UnArchiveLib.unarchive(cachedDep, outputDir, pd, project)
+                    }
                 }
 
                 if (found) break

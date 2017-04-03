@@ -15,8 +15,8 @@
  */
 package com.hierynomus.gradle.plugins.jython.repository
 
-import com.hierynomus.gradle.plugins.jython.dependency.PythonDependency
 import groovy.text.SimpleTemplateEngine
+import org.gradle.api.artifacts.ExternalModuleDependency
 
 class UrlRepository extends Repository {
 
@@ -27,7 +27,7 @@ class UrlRepository extends Repository {
     }
 
     @Override
-    String getReleaseUrl(PythonDependency dep) {
+    String getReleaseUrl(ExternalModuleDependency dep) {
         def engine = new SimpleTemplateEngine()
         def template = engine.createTemplate(repository)
         return template.make(['dep': dep]).toString()

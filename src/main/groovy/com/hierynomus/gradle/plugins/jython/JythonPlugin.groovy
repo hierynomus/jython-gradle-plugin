@@ -64,11 +64,11 @@ class JythonPlugin implements Plugin<Project> {
 
     def configureProject(Project project) {
         DefaultDependencyHandler.metaClass.python { depInfo ->
-            return PythonDependency.create(depInfo, project)
+            return PythonDependency.create(depInfo)
         }
 
         DefaultDependencyHandler.metaClass.python { depInfo, closure ->
-            PythonDependency dep = PythonDependency.create(depInfo, project)
+            PythonDependency dep = PythonDependency.create(depInfo)
             ConfigureUtil.configure(closure, dep)
             return dep
         }

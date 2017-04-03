@@ -19,7 +19,7 @@ import com.hierynomus.gradle.plugins.jython.repository.PypiRepository
 import com.hierynomus.gradle.plugins.jython.repository.Repository
 import com.hierynomus.gradle.plugins.jython.repository.UrlRepository
 
-class JythonExtension {
+class JythonExtension implements Serializable {
 
     File pyCacheDir
 

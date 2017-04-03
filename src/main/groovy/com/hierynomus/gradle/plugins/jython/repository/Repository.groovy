@@ -15,16 +15,16 @@
  */
 package com.hierynomus.gradle.plugins.jython.repository
 
-import com.hierynomus.gradle.plugins.jython.dependency.PythonDependency
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
-abstract class Repository {
+abstract class Repository implements Serializable {
     final Logger logger = Logging.getLogger(this.getClass())
 
-    File resolve(File pyCacheDir, PythonDependency dep) {
+    File resolve(File pyCacheDir, ExternalModuleDependency dep) {
         File cachePath = toCachePath(pyCacheDir, dep)
         File cachedArtifact = listExistingArtifact(pyCacheDir, dep)
         if (!cachedArtifact) {
@@ -71,7 +71,7 @@ abstract class Repository {
      * @param pythonDependency The dependency
      * @return The pre-existing artifact, or null
      */
-    File listExistingArtifact(File artifactCachePath, PythonDependency pythonDependency) {
+    File listExistingArtifact(File artifactCachePath, ExternalModuleDependency pythonDependency) {
         String artifactName = artifactName(pythonDependency)
         def files = artifactCachePath.listFiles(new FilenameFilter() {
             @Override
@@ -84,17 +84,17 @@ abstract class Repository {
         }
     }
 
-    abstract String getReleaseUrl(PythonDependency dep)
+    abstract String getReleaseUrl(ExternalModuleDependency dep)
 
-    String group(PythonDependency dep) {
+    String group(ExternalModuleDependency dep) {
         return dep.group
     }
 
-    String artifactName(PythonDependency dep) {
+    String artifactName(ExternalModuleDependency dep) {
         return "${dep.name}-${dep.version}"
     }
 
-    File toCachePath(File pyCacheDir, PythonDependency dep) {
+    File toCachePath(File pyCacheDir, ExternalModuleDependency dep) {
         new File(pyCacheDir, "${group(dep)}/${dep.name}/${dep.version}")
     }
 

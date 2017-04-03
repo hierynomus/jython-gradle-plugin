@@ -15,12 +15,12 @@
  */
 package com.hierynomus.gradle.plugins.jython.repository
 
-import com.hierynomus.gradle.plugins.jython.dependency.PythonDependency
 import groovy.text.SimpleTemplateEngine
 import groovy.text.Template
 import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
@@ -42,7 +42,7 @@ class PypiRepository extends Repository {
     }
 
     @Override
-    String getReleaseUrl(PythonDependency dep) {
+    String getReleaseUrl(ExternalModuleDependency dep) {
         String queryUrl = template.make(['dep': dep]).toString()
         logger.debug("Querying PyPI: $queryUrl")
         def queryHttp = new HTTPBuilder(queryUrl)
@@ -63,7 +63,7 @@ class PypiRepository extends Repository {
     }
 
     @Override
-    String group(PythonDependency dep) {
+    String group(ExternalModuleDependency dep) {
         if (dep.group) {
             return "pypi/" + dep.group
         } else {

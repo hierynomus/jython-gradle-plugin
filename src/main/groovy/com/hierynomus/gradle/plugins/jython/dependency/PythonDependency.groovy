@@ -18,29 +18,42 @@ package com.hierynomus.gradle.plugins.jython.dependency
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ExternalModuleDependency
-import org.gradle.api.file.CopySpec
 import org.gradle.api.internal.artifacts.dependencies.AbstractExternalModuleDependency
-import org.gradle.util.ConfigureUtil
 
 class PythonDependency extends AbstractExternalModuleDependency {
-    private CopySpec copySpec
-    private Project project
+    String moduleName
+    List<String> toCopy = []
+    boolean useModuleName = true
 
-    PythonDependency(String group, String name, String version, String configuration, Project project) {
+    PythonDependency(String group, String name, String version, String configuration) {
         super(group, name, version, configuration)
-        this.project = project
-        this.copySpec = project.copySpec()
+        this.moduleName = name
     }
 
-    static PythonDependency create(depInfo, Project project) {
+    static PythonDependency create(depInfo) {
+        def pd
         if (depInfo instanceof String) {
             def split = depInfo.split(":")
-            return new PythonDependency(split[0], split[1], split[2], null, project)
+            pd = new PythonDependency(split[0], split[1], split[2], null)
+            if (split.length > 3) {
+                pd.moduleName = split[3]
+            }
         } else if (depInfo instanceof Map) {
-            return new PythonDependency(depInfo.getOrDefault("group", null) as String, depInfo.get("name") as String, depInfo.get("version") as String, null, project)
+            pd = new PythonDependency(depInfo.getOrDefault("group", null) as String, depInfo.get("name") as String, depInfo.get("version") as String, null)
+            if (depInfo.containsKey('classifier')) {
+                pd.moduleName = depInfo['classifier']
+            }
         } else if (depInfo instanceof ExternalModuleDependency) {
-            return new PythonDependency(depInfo.group, depInfo.name, depInfo.version, depInfo.configuration, project)
+            pd = new PythonDependency(depInfo.group, depInfo.name, depInfo.version, depInfo.configuration)
+            if (depInfo.artifacts.size() == 1 && depInfo.artifacts[0].classifier) {
+                pd.moduleName = depInfo.artifacts[0].classifier
+            } else {
+                pd.artifacts = depInfo.artifacts
+            }
+        } else {
+            throw new IllegalArgumentException("Cannot convert $depInfo to PythonDependency")
         }
+        return pd
     }
 
     @Override
@@ -55,20 +68,23 @@ class PythonDependency extends AbstractExternalModuleDependency {
         }
     }
 
-//    PythonDependency configure(Closure<?> closure) {
-//        closure.setDelegate(this)
-//        closure()
-//        return this
-//    }
-
-    def copy(Closure<?> closure) {
-        ConfigureUtil.configure(closure, copySpec)
+    void copy(String toCopy) {
+        this.toCopy.add(toCopy)
     }
 
     @Override
     ExternalModuleDependency copy() {
-        PythonDependency copiedModuleDependency = new PythonDependency(this.getGroup(), this.getName(), this.getVersion(), this.getConfiguration(), project);
-        this.copyTo(copiedModuleDependency);
-        return copiedModuleDependency;
+        PythonDependency copiedModuleDependency = new PythonDependency(this.getGroup(), this.getName(), this.getVersion(), this.getConfiguration())
+        this.copyTo(copiedModuleDependency)
+        return copiedModuleDependency
+    }
+
+    @Override
+    String toString() {
+        return "$group:$name:$version"
+    }
+
+    void setUseModuleName(boolean useModuleName) {
+        this.useModuleName = useModuleName
     }
 }

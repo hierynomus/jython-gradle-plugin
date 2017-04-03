@@ -45,8 +45,8 @@ class JythonPluginTest extends Specification {
         project.jython.sourceRepositories = [
                 'http://localhost:' + server.getPort() + '/${dep.group}/${dep.name}/${dep.name}-${dep.version}.tar.gz',
                 'http://localhost:' + server.getPort() + '/${dep.group}/${dep.name}/${dep.name}-${dep.version}.zip']
-        whenHttp(server).match(get("/test/pylib/pylib-0.1.0.tar.gz")).then(ok(), resourceContent("pylib-0.1.0.tar.gz"))
-        whenHttp(server).match(get("/test/otherlib/otherlib-0.1.0.zip")).then(ok(), resourceContent("otherlib-0.1.0.zip"))
+        whenHttp(server).match(get("/test/pylib/pylib-0.1.0.tar.gz")).then(ok(), resourceContent("pylib-0.1.0.tar.gz"), contentType("application/tar+gz"))
+        whenHttp(server).match(get("/test/otherlib/otherlib-0.1.0.zip")).then(ok(), resourceContent("otherlib-0.1.0.zip"), contentType("application/zip"))
     }
 
     def cleanup() {
@@ -120,15 +120,15 @@ class JythonPluginTest extends Specification {
         setup:
         project.apply plugin: 'java'
         project.dependencies {
-            jython "test:pylib.py:0.1.0:pylib"
+            jython "test:renamed-lib:0.1.0:reallib"
         }
-        whenHttp(server).match(get("/test/pylib.py/pylib.py-0.1.0.tar.gz")).then(ok(), resourceContent("pylib-0.1.0.tar.gz"))
+        whenHttp(server).match(get("/test/renamed-lib/renamed-lib-0.1.0.tar.gz")).then(ok(), resourceContent("renamed-lib-0.1.0.tar.gz"))
 
         when:
         project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
 
         then:
-        new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+        new File(project.buildDir, "jython/main/reallib/__init__.py").exists()
     }
 
     def "should support getting a single file from the module directory"() {
@@ -180,27 +180,25 @@ class JythonPluginTest extends Specification {
 
         then:
         new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+        !new File(project.buildDir, "jython/main/requirements.txt").exists()
     }
 
-//    def "should use copySpec attached to PythonDependency for extraction"() {
-//        setup:
-//        project.apply plugin: 'java'
-//        project.dependencies {
-//            jython python("test:pylib:0.1.0") {
-//                copy {
-//                    from "src/sublib"
-//                }
-//            }
-//        }
-//
-//        when:
-//        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
-//
-//        then:
-//        !new File(project.buildDir, "jython/main/src/sublib/__init__.py").exists()
-//        new File(project.buildDir, "jython/main/sublib/__init__.py").exists()
-//    }
-//
+    def "should define paths to copy in PythonDependency for extraction"() {
+        setup:
+        project.apply plugin: 'java'
+        project.dependencies {
+            jython python("test:pylib:0.1.0:sublib") {
+                copy "src/sublib"
+            }
+        }
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        !new File(project.buildDir, "jython/main/src/sublib/__init__.py").exists()
+        new File(project.buildDir, "jython/main/sublib/__init__.py").exists()
+    }
 
     List<String> getEntriesOfJar(File archive) {
         def stream = new JarArchiveInputStream(new FileInputStream(archive))

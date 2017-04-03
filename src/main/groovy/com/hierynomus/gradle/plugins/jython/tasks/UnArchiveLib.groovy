@@ -15,16 +15,71 @@
  */
 package com.hierynomus.gradle.plugins.jython.tasks
 
+import com.hierynomus.gradle.plugins.jython.dependency.PythonDependency
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.gradle.api.Project
 import org.gradle.api.logging.Logging
+import org.gradle.util.ConfigureUtil
+
+import java.nio.file.Files
 
 class UnArchiveLib {
     static final def logger = Logging.getLogger(UnArchiveLib.class)
 
+    static def unarchive(File cachedDep, File outputDir, PythonDependency pd, Project project) {
+        def files
+        def archivePath
+        if (cachedDep.name.endsWith(".zip")) {
+            files = project.zipTree(cachedDep)
+            archivePath = cachedDep.name - ".zip"
+        } else if (cachedDep.name.endsWith(".tar.gz")) {
+            files = project.tarTree(cachedDep)
+            archivePath = cachedDep.name - ".tar.gz"
+        }
+
+        def tempDir = Files.createTempDirectory("gradle_${cachedDep.name}").toFile()
+        try {
+            project.copy {
+                into(tempDir)
+                includeEmptyDirs = false
+                from(files)
+                eachFile { f ->
+                    f.path = (f.path - "${archivePath}/")
+                }
+            }
+
+            if (pd.toCopy) {
+                project.copy { cs ->
+                    if (pd.useModuleName) {
+                        cs.into "${outputDir}/${pd.moduleName}"
+                    } else {
+                        cs.into "${outputDir}"
+                    }
+
+                    pd.toCopy.each { c ->
+                        cs.from(new File(tempDir, c))
+                    }
+                }
+            } else {
+                project.copy { cs ->
+                    cs.into("${outputDir}/${pd.moduleName}")
+                    cs.from(new File(tempDir, pd.moduleName))
+                }
+            }
+        } finally {
+            tempDir.deleteDir()
+        }
+    }
+//    if (pd.artifacts) {
+//        into("${outputDir}")
+//        pd.artifacts.each { a ->
+//            from(new File(tempDir, "${a.name}.${a.extension}"))
+//        }
+//    }
     static def getArchiveInputStream(File cachedDep) {
         def buffered = new BufferedInputStream(new FileInputStream(cachedDep))
         if (cachedDep.name.endsWith(".zip")) {

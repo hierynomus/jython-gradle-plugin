@@ -31,15 +31,19 @@ class JythonExtension implements Serializable {
     void setSourceRepositories(Collection sourceRepositories) {
         this.sourceRepositories = []
         sourceRepositories.forEach({ r ->
-            if (r instanceof String && r == "pypi") {
-                this.sourceRepositories.add(new PypiRepository())
-            } else if (r instanceof String) {
-                this.sourceRepositories.add(new UrlRepository(r))
-            } else if (r instanceof Repository) {
-                this.sourceRepositories.add(r)
-            } else {
-                throw new IllegalArgumentException("Don't know how to convert $r to Repository")
-            }
+            repository(r)
         })
+    }
+
+    void repository(r) {
+        if (r instanceof String && r == "pypi") {
+            this.sourceRepositories.add(new PypiRepository())
+        } else if (r instanceof String) {
+            this.sourceRepositories.add(new UrlRepository(r))
+        } else if (r instanceof Repository) {
+            this.sourceRepositories.add(r)
+        } else {
+            throw new IllegalArgumentException("Don't know how to convert $r to Repository")
+        }
     }
 }

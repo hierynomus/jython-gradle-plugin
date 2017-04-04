@@ -1,4 +1,4 @@
-= Jython Gradle Plugin
+ython Gradle Plugin
 Jeroen van Erp
 :jython_plugin_version: 0.3.0
 
@@ -70,7 +70,7 @@ jython {
 }
 ----
 
-== INCUBATING (0.5.x) Non-default libraries/modules
+== INCUBATING (0.6.x) Non-default libraries/modules
 
 === If a python module name differs from the artifact name.
 In some cases, the python module name is not the same as the artifact name. In order to overcome this, you can convert the dependency to a `PythonDependency` and configure the `moduleName` accordingly.
@@ -88,21 +88,6 @@ dependencies {
 ----
 
 === If you only need to include specific file(s) or directories from the module
-
-== OLD (pre 0.5.x): Non-default libraries/modules
-
-=== If a python module name differs from the artifact name.
-In some cases, the python module name is not the same as the artifact name. In order to overcome this, you can use the `classifier` of the dependency to set the correct module name used for extraction. For instance:
-
-[source,groovy,subs="verbatim,attributes"]
-----
-dependencies {
-  jython "jmespath:jmespath.py:0.7.1:jmespath"
-  jython ":python-dateutil:2.4.2:dateutil"
-}
-----
-
-=== If you only need to include specific file(s) from the module
 In some cases, the python script(s) are not bundled in a python module directory, but rather in the root. In these cases you can configure the plugin with the following dependency:
 
 [source,groovy,subs="verbatim,attributes"]
@@ -122,7 +107,45 @@ dependencies {
 }
 ----
 
+== OLD (pre 0.6.x): Non-default libraries/modules
+
+=== If a python module name differs from the artifact name.
+In some cases, the python module name is not the same as the artifact name. In order to overcome this, you can use the `classifier` of the dependency to set the correct module name used for extraction. For instance:
+
+[source,groovy,subs="verbatim,attributes"]
+----
+dependencies {
+  jython "jmespath:jmespath.py:0.7.1:jmespath"
+  jython ":python-dateutil:2.4.2:dateutil"
+}
+----
+
+=== If you only need to include specific file(s) from the module
+In some cases, the python script(s) are not bundled in a python module directory, but rather in the root. In these cases you can configure the plugin with the following dependency:
+
+[source,groovy,subs="verbatim,attributes"]
+----
+dependencies {
+  jython(":six:1.9.0") {
+    artifact {
+      name = "six"
+      extension = "py"
+    }
+  }
+}
+----
+This will only add the six.py file from the downloaded module.
+
+
 == Changelog
+
+=== v0.6.0 (2017-04-04)
+- Added cacheing of downloaded python modules to allow for offline building
+- Fixed https://github.com/hierynomus/jython-gradle-plugin/issues/6[#6]: Module notation more intuitive
+- Fixed https://github.com/hierynomus/jython-gradle-plugin/issues/10[#10]: Added support for python modules which are packaged in subdirectories
+
+=== v0.5.0 (2017-03-27)
+- Fixed https://github.com/hierynomus/jython-gradle-plugin/issues/11[#11]: IOException when directory structure entries not in python module
 
 === v0.4.0 (2015-10-07)
 - Converted download code from Apache HTTP to Groovy HTTP-Builder (Fixes https://github.com/hierynomus/jython-gradle-plugin/issues/7[#7])

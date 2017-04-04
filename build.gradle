@@ -85,6 +85,9 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
     afterSuite { descriptor, result ->
         def indicator = "\u001B[32m✓\u001b[0m"
         if (result.failedTestCount > 0) {

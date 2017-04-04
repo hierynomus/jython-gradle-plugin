@@ -225,6 +225,22 @@ class JythonPluginTest extends Specification {
         new File(project.buildDir, "jython/main/sublib/__init__.py").exists()
     }
 
+    def "should be able to add string based repository"() {
+        setup:
+        project.jython.sourceRepositories = []
+        project.jython.repository 'http://localhost:' + server.getPort() + '/${dep.group}/${dep.name}/${dep.name}-${dep.version}.tar.gz'
+        project.apply plugin: 'java'
+        project.dependencies {
+            jython python("test:pylib:0.1.0")
+        }
+
+        when:
+        project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+    }
+
     List<String> getEntriesOfJar(File archive) {
         def stream = new JarArchiveInputStream(new FileInputStream(archive))
         List<String> names = new ArrayList<>()

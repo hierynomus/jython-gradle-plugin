@@ -66,7 +66,10 @@ These can be overridden or extended using the `jython` extension. For instance:
 [source,groovy,subs="verbatim,attributes"]
 ----
 jython {
-  sourceRepositories += `http://my.local.repo/${dep.name}/${dep.version}/${dep.name}-${dep.version}.tar.gz
+  // Replace all repositories with this one
+  sourceRepositories = ['http://my.local.repo/${dep.name}/${dep.version}/${dep.name}-${dep.version}.tar.gz']
+  // Add another repository to the existing ones
+  repository 'pipy'
 }
 ----
 

@@ -30,9 +30,9 @@ class JythonExtension implements Serializable {
 
     void setSourceRepositories(Collection sourceRepositories) {
         this.sourceRepositories = []
-        sourceRepositories.forEach({ r ->
+        sourceRepositories.each { r ->
             repository(r)
-        })
+        }
     }
 
     void repository(r) {

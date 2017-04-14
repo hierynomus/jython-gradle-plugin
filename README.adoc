@@ -1,6 +1,4 @@
 == Jython Gradle Plugin
-Jeroen van Erp
-:jython_plugin_version: 0.6.0
 
 [link=https://travis-ci.org/hierynomus/jython-gradle-plugin]
 image::https://travis-ci.org/hierynomus/jython-gradle-plugin.svg?branch=master[]

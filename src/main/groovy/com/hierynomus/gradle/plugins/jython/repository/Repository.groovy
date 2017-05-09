@@ -26,11 +26,11 @@ abstract class Repository implements Serializable {
 
     File resolve(File pyCacheDir, ExternalModuleDependency dep) {
         File cachePath = toCachePath(pyCacheDir, dep)
-        File cachedArtifact = listExistingArtifact(pyCacheDir, dep)
+        File cachedArtifact = listExistingArtifact(cachePath, dep)
         if (!cachedArtifact) {
             String url = getReleaseUrl(dep)
             if (url) {
-                logger.lifecycle("Downloading: $dep from $url")
+                logger.info("Downloading :${dep.name}:${dep.version} from $url")
 
                 def http = new HTTPBuilder(url)
                 http.request(Method.GET) {
@@ -58,6 +58,8 @@ abstract class Repository implements Serializable {
                     }
                 }
             }
+        } else {
+            logger.info("Using cached artifact $cachedArtifact for depedency :${dep.name}:${dep.version}")
         }
         return cachedArtifact
     }
@@ -81,6 +83,8 @@ abstract class Repository implements Serializable {
         })
         if (files) {
             return files[0]
+        } else {
+            return null
         }
     }
 
@@ -94,7 +98,7 @@ abstract class Repository implements Serializable {
         return "${dep.name}-${dep.version}"
     }
 
-    File toCachePath(File pyCacheDir, ExternalModuleDependency dep) {
+    private File toCachePath(File pyCacheDir, ExternalModuleDependency dep) {
         new File(pyCacheDir, "${group(dep)}/${dep.name}/${dep.version}")
     }
 

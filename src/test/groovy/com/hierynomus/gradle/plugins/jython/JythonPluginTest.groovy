@@ -172,7 +172,7 @@ class JythonPluginTest extends Specification {
     def "should work with new PythonDependency"() {
         setup:
         project.dependencies {
-            jython python("test:pylib:0.1.0")
+            jython python("test:pylib:0.1.0") {}
         }
 
         when:
@@ -231,11 +231,30 @@ class JythonPluginTest extends Specification {
         project.jython.repository 'http://localhost:' + server.getPort() + '/${dep.group}/${dep.name}/${dep.name}-${dep.version}.tar.gz'
         project.apply plugin: 'java'
         project.dependencies {
-            jython python("test:pylib:0.1.0")
+            jython "test:pylib:0.1.0"
         }
 
         when:
         project.tasks.getByName(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
+
+        then:
+        new File(project.buildDir, "jython/main/pylib/__init__.py").exists()
+    }
+
+    def "should use cache for python artifacts"() {
+        given:
+        project.apply plugin: 'java'
+        project.dependencies {
+            jython "test:cached:0.42.0:pylib"
+        }
+        def cacheDir = File.createTempDir()
+        project.jython.pyCacheDir = cacheDir
+        def cachePath = new File(cacheDir, "test/cached/0.42.0")
+        cachePath.mkdirs()
+        new File(cachePath, "cached-0.42.0.tar.gz") << Thread.currentThread().getContextClassLoader().getResourceAsStream("pylib-0.1.0.tar.gz")
+
+        when:
+        project.tasks.getByPath(JythonPlugin.RUNTIME_DEP_DOWNLOAD).execute()
 
         then:
         new File(project.buildDir, "jython/main/pylib/__init__.py").exists()

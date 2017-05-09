@@ -56,6 +56,12 @@ class PythonDependency extends AbstractExternalModuleDependency {
         return pd
     }
 
+    static PythonDependency create(depInfo, closure) {
+        PythonDependency dep = create(depInfo)
+        ConfigureUtil.configure(closure, dep)
+        return dep
+    }
+
     @Override
     boolean contentEquals(Dependency dependency) {
         if(this == dependency) {

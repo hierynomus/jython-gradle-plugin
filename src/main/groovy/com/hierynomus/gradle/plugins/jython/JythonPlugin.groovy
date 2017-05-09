@@ -19,7 +19,6 @@ import com.hierynomus.gradle.plugins.jython.dependency.PythonDependency
 import com.hierynomus.gradle.plugins.jython.tasks.DownloadJythonDeps
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.util.ConfigureUtil
 
@@ -63,14 +62,8 @@ class JythonPlugin implements Plugin<Project> {
     }
 
     def configureProject(Project project) {
-        DefaultDependencyHandler.metaClass.python { depInfo ->
-            return PythonDependency.create(depInfo)
-        }
-
-        DefaultDependencyHandler.metaClass.python { depInfo, closure ->
-            PythonDependency dep = PythonDependency.create(depInfo)
-            ConfigureUtil.configure(closure, dep)
-            return dep
+        project.dependencies.ext.python = { depInfo, closure ->
+            return PythonDependency.create(depInfo, closure)
         }
 
         project.configurations.create(RUNTIME_SCOPE_CONFIGURATION)

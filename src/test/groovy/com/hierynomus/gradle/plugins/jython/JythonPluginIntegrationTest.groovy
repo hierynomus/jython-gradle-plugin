@@ -60,10 +60,10 @@ dependencies {
 
         where:
         gradleVersion | dep
-        '2.11' | ':boto3:1.1.3'
-        '2.11' |  ':docker:2.0.0'
-        '2.12' | ':boto3:1.1.3'
-        '2.12' |  ':docker:2.0.0'
+        '2.11'        | ':boto3:1.1.3'
+        '2.11'        | ':docker:2.0.0'
+        '2.12'        | ':boto3:1.1.3'
+        '2.12'        | ':docker:2.0.0'
+        '3.5'         | ':docker:2.0.0'
     }
-
 }

@@ -23,6 +23,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.DependencyArtifact
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
@@ -31,6 +32,7 @@ class DownloadJythonDeps extends DefaultTask {
     @Input
     String configuration
 
+    @Internal
     JythonExtension extension
 
     @OutputDirectory

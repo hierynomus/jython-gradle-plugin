@@ -18,6 +18,7 @@ package com.hierynomus.gradle.plugins.jython
 import com.hierynomus.gradle.plugins.jython.repository.PypiRepository
 import com.hierynomus.gradle.plugins.jython.repository.Repository
 import com.hierynomus.gradle.plugins.jython.repository.UrlRepository
+import org.gradle.api.Project
 
 class JythonExtension implements Serializable {
 
@@ -27,6 +28,8 @@ class JythonExtension implements Serializable {
             new PypiRepository(),
             new UrlRepository('https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz')
     ]
+
+    Project project
 
     void setSourceRepositories(Collection sourceRepositories) {
         this.sourceRepositories = []

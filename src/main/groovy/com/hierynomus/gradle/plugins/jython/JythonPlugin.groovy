@@ -69,6 +69,10 @@ class JythonPlugin implements Plugin<Project> {
         project.configurations.create(RUNTIME_SCOPE_CONFIGURATION)
         project.configurations.create(TEST_SCOPE_CONFIGURATION)
         extension = project.extensions.create("jython", JythonExtension)
+        extension.with {
+            it.project = project
+        }
+
     }
 
     def createTasks(Project project) {

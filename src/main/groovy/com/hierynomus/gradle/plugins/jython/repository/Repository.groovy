@@ -15,8 +15,10 @@
  */
 package com.hierynomus.gradle.plugins.jython.repository
 
+import com.hierynomus.gradle.plugins.jython.JythonExtension
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
@@ -24,15 +26,15 @@ import org.gradle.api.logging.Logging
 abstract class Repository implements Serializable {
     final Logger logger = Logging.getLogger(this.getClass())
 
-    File resolve(File pyCacheDir, ExternalModuleDependency dep) {
-        File cachePath = toCachePath(pyCacheDir, dep)
+    File resolve(JythonExtension extension, ExternalModuleDependency dep) {
+        File cachePath = toCachePath(extension.pyCacheDir, dep)
         File cachedArtifact = listExistingArtifact(cachePath, dep)
         if (!cachedArtifact) {
-            String url = getReleaseUrl(dep)
+            String url = getReleaseUrl(extension, dep)
             if (url) {
                 logger.info("Downloading :${dep.name}:${dep.version} from $url")
 
-                def http = new HTTPBuilder(url)
+                def http = newHTTPBuilder(extension, url)
                 http.request(Method.GET) {
                     response.success = { resp, body ->
                         this.logger.debug "Got response: ${resp.statusLine}"
@@ -64,6 +66,28 @@ abstract class Repository implements Serializable {
         return cachedArtifact
     }
 
+    HTTPBuilder newHTTPBuilder(JythonExtension extension, String url) {
+        def http = new HTTPBuilder(url)
+        def p = extension.project
+        if (p.hasProperty("systemProp.http.proxyHost")) {
+            configureProxy(p, "http", http)
+        } else if (p.hasProperty("systemProp.https.proxyHost")) {
+            configureProxy(p, "https", http)
+        }
+        return http
+    }
+
+    private def configureProxy(Project project, String scheme, HTTPBuilder http) {
+        String proxyHost = project.property("systemProp.${scheme}.proxyHost") as String
+        int proxyPort = project.property("systemProp.${scheme}.proxyPort") as Integer
+        http.setProxy(proxyHost, proxyPort, scheme)
+        if (project.hasProperty("systemProp.${scheme}.proxyUsername")) {
+            String username = project.property("systemProp.${scheme}.proxyUsername") as String
+            String password = project.property("systemProp.${scheme}.proxyPassword") as String
+            http.auth.basic(proxyHost, proxyPort, username, password)
+        }
+    }
+
     /**
      * List the cache directory contents to check whether there is a pre-existing artifact
      * This is needed because we do not know beforehand without doing a network call what the
@@ -88,7 +112,7 @@ abstract class Repository implements Serializable {
         }
     }
 
-    abstract String getReleaseUrl(ExternalModuleDependency dep)
+    abstract String getReleaseUrl(JythonExtension extension, ExternalModuleDependency dep)
 
     String group(ExternalModuleDependency dep) {
         return dep.group

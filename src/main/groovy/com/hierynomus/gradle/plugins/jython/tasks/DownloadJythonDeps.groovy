@@ -45,7 +45,7 @@ class DownloadJythonDeps extends DefaultTask {
             logger.lifecycle("Downloading Jython library: $name with version ${d.version}")
             boolean found = false
             for (Repository r : extension.sourceRepositories) {
-                File cachedDep = r.resolve(extension.pyCacheDir, d)
+                File cachedDep = r.resolve(extension, d)
                 if (cachedDep) {
                     found = true
 

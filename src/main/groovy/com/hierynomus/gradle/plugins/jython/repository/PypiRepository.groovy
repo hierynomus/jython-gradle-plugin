@@ -15,6 +15,7 @@
  */
 package com.hierynomus.gradle.plugins.jython.repository
 
+import com.hierynomus.gradle.plugins.jython.JythonExtension
 import groovy.text.SimpleTemplateEngine
 import groovy.text.Template
 import groovyx.net.http.ContentType
@@ -42,10 +43,10 @@ class PypiRepository extends Repository {
     }
 
     @Override
-    String getReleaseUrl(ExternalModuleDependency dep) {
+    String getReleaseUrl(JythonExtension extension, ExternalModuleDependency dep) {
         String queryUrl = template.make(['dep': dep]).toString()
         logger.debug("Querying PyPI: $queryUrl")
-        def queryHttp = new HTTPBuilder(queryUrl)
+        def queryHttp = newHTTPBuilder(extension, queryUrl)
         queryHttp.request(Method.GET, ContentType.JSON) {
             response.success = { resp, json ->
                 if (json.releases) {

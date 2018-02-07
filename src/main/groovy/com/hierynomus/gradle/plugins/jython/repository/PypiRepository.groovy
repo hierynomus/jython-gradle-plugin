@@ -53,6 +53,11 @@ class PypiRepository extends Repository {
                     def release_urls = json.releases[dep.version]
                     if (release_urls) {
                         for (u in release_urls) {
+                            if (u['python_version'] == 'source' and u['url'].endsWith(".zip")) {
+                                return u['url']
+                            }
+                        }
+                        for (u in release_urls) {
                             if (u['python_version'] == 'source') {
                                 return u['url']
                             }

@@ -48,7 +48,7 @@ class PypiRepository extends Repository {
         XmlSlurper parser = new XmlSlurper(false, true, true)
         GPathResult packageList = parser.parse(queryUrl)
         GPathResult packageLink = packageList.depthFirst().find {
-            it.name() == 'a' && it.text().equalsIgnoreCase("${dep.name}-${dep.version}.tar.gz")
+            it.name() == 'a' && it.text().matches("${dep.name}-${dep.version}.(tar\\.gz|zip)")
         }
 
         if (packageLink) {

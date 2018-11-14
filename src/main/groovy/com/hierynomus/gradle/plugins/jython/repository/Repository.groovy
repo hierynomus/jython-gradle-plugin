@@ -39,9 +39,9 @@ abstract class Repository implements Serializable {
                     response.success = { resp, body ->
                         this.logger.debug "Got response: ${resp.statusLine}"
                         this.logger.debug "Response length: ${resp.getFirstHeader('Content-Length')}"
-                        if (url.endsWith(".zip")) {
+                        if (uri.path.endsWith(".zip")) {
                             cachedArtifact = new File(cachePath, artifactName(dep) + ".zip")
-                        } else if (url.endsWith(".tar.gz")) {
+                        } else if (uri.path.endsWith(".tar.gz")) {
                             cachedArtifact = new File(cachePath, artifactName(dep) + ".tar.gz")
                         } else {
                             throw new IllegalArgumentException("Unknown Python artifact extension: $url for dependency $dep")

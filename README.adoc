@@ -54,11 +54,10 @@ dependencies {
 == Configuration
 By default the following two repository-patterns have been defined for the plugin:
 
-- +pipy+
+- +pypi+
 - +https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz+
 
-The `pipy` repository pattern triggers special behavior. A REST call to `https://pypi.python.org/pypi/${dep.name}/json`
-is made and the URL for the `source` release for that version is retrieved from the response.
+The `pypi` repository uses PyPi's Simple API (`https://pypi.org/simple/${dep.name}/`) to query for the release of the specified version.
 
 These can be overridden or extended using the `jython` extension. For instance:
 
@@ -68,7 +67,7 @@ jython {
   // Replace all repositories with this one
   sourceRepositories = ['http://my.local.repo/${dep.name}/${dep.version}/${dep.name}-${dep.version}.tar.gz']
   // Add another repository to the existing ones
-  repository 'pipy'
+  repository 'pypi'
 }
 ----
 

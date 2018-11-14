@@ -18,9 +18,7 @@ package com.hierynomus.gradle.plugins.jython.repository
 import com.hierynomus.gradle.plugins.jython.JythonExtension
 import groovy.text.SimpleTemplateEngine
 import groovy.text.Template
-import groovyx.net.http.ContentType
-import groovyx.net.http.HTTPBuilder
-import groovyx.net.http.Method
+import groovy.util.slurpersupport.GPathResult
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
@@ -33,7 +31,7 @@ class PypiRepository extends Repository {
     private Template template
 
     PypiRepository() {
-        this('https://pypi.python.org/pypi/${dep.name}/json')
+        this('https://pypi.org/simple/${dep.name}/')
     }
 
     PypiRepository(String queryUrl) {
@@ -46,19 +44,20 @@ class PypiRepository extends Repository {
     String getReleaseUrl(JythonExtension extension, ExternalModuleDependency dep) {
         String queryUrl = template.make(['dep': dep]).toString()
         logger.debug("Querying PyPI: $queryUrl")
-        def queryHttp = newHTTPBuilder(extension, queryUrl)
-        queryHttp.request(Method.GET, ContentType.JSON) {
-            response.success = { resp, json ->
-                if (json.releases) {
-                    def release_urls = json.releases[dep.version]
-                    if (release_urls) {
-                        for (u in release_urls) {
-                            if (u['python_version'] == 'source') {
-                                return u['url']
-                            }
-                        }
-                    }
-                }
+
+        XmlSlurper parser = new XmlSlurper(false, true, true)
+        GPathResult packageList = parser.parse(queryUrl)
+        GPathResult packageLink = packageList.depthFirst().find {
+            it.name() == 'a' && it.text().equalsIgnoreCase("${dep.name}-${dep.version}.tar.gz")
+        }
+
+        if (packageLink) {
+            URI href = new URI("${packageLink.@href.text()}")
+
+            if (href.isAbsolute()) {
+                return href.normalize()
+            } else {
+                return new URI("${queryUrl}/${packageLink.@href.text()}").normalize()
             }
         }
     }

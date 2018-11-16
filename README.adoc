@@ -57,7 +57,10 @@ By default the following two repository-patterns have been defined for the plugi
 - +pypi+
 - +https://github.com/${dep.group}/${dep.name}/archive/${dep.version}.tar.gz+
 
-The `pypi` repository uses PyPi's Simple API (`https://pypi.org/simple/${dep.name}/`) to query for the release of the specified version.
+The `pypi` repository pattern triggers special behavior. A REST call to `https://pypi.org/pypi/${dep.name}/json`
+is made and the URL for the `source` release for that version is retrieved from the response.
+
+The `pypiLegacy` repository uses PyPi's Simple API (`https://pypi.org/simple/${dep.name}/`) to query for the dependency.
 
 These can be overridden or extended using the `jython` extension. For instance:
 
@@ -68,6 +71,8 @@ jython {
   sourceRepositories = ['http://my.local.repo/${dep.name}/${dep.version}/${dep.name}-${dep.version}.tar.gz']
   // Add another repository to the existing ones
   repository 'pypi'
+  // Add self hosted PyPi repository
+  repository pypiLegacy('http://myselfhostedpypi.org/simple/${dep.name}/')
 }
 ----
 

@@ -16,6 +16,7 @@
 package com.hierynomus.gradle.plugins.jython
 
 import com.hierynomus.gradle.plugins.jython.repository.PypiRepository
+import com.hierynomus.gradle.plugins.jython.repository.PypiLegacyRepository
 import com.hierynomus.gradle.plugins.jython.repository.Repository
 import com.hierynomus.gradle.plugins.jython.repository.UrlRepository
 import org.gradle.api.Project
@@ -38,9 +39,15 @@ class JythonExtension implements Serializable {
         }
     }
 
+    PypiLegacyRepository pypiLegacy(String url) {
+        return new PypiLegacyRepository(url)
+    }
+
     void repository(r) {
         if (r instanceof String && r == "pypi") {
             this.sourceRepositories.add(new PypiRepository())
+        } else if (r instanceof String && r == "pypiLegacy") {
+            this.sourceRepositories.add(new PypiLegacyRepository())
         } else if (r instanceof String) {
             this.sourceRepositories.add(new UrlRepository(r))
         } else if (r instanceof Repository) {

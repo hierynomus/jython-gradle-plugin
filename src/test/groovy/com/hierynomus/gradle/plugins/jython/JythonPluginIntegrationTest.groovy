@@ -66,6 +66,8 @@ dependencies {
         '3.5'         | ':docker:2.0.0'
         '4.9'         | ':boto3:1.1.3'
         '4.9'         | ':docker:2.0.0'
+        '5.2.1'       | ':boto3:1.1.3'
+        '5.2.1'       | ':docker:2.0.0'
     }
 
     @Unroll
@@ -109,6 +111,6 @@ dependencies {
         new File(m, "isodate").isDirectory()
 
         where:
-        gradleVersion << ['4.9']
+        gradleVersion << ['4.9', '5.2.1']
     }
 }

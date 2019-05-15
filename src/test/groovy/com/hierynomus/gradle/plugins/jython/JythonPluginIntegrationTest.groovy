@@ -15,7 +15,6 @@
  */
 package com.hierynomus.gradle.plugins.jython
 
-import org.gradle.api.tasks.testing.TestResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Rule
@@ -65,5 +64,53 @@ dependencies {
         '2.12'        | ':boto3:1.1.3'
         '2.12'        | ':docker:2.0.0'
         '3.5'         | ':docker:2.0.0'
+        '4.9'         | ':boto3:1.1.3'
+        '4.9'         | ':docker:2.0.0'
+        '5.2.1'       | ':boto3:1.1.3'
+        '5.2.1'       | ':docker:2.0.0'
+    }
+
+    @Unroll
+    def "can use python() method with Gradle version #gradleVersion"() {
+        given:
+        buildFile << """
+plugins {
+    id "java"
+    id "com.github.hierynomus.jython"
+}
+
+dependencies {
+  jython python(":six:1.9.0") {
+    useModuleName = false // Copy not to moduleName 'six', but rather to the root
+    copy {
+      from "six.py" // Will only copy six.py
+    }
+  }
+  jython python(":isodate:0.5.4") {
+    copy {
+      from "src/isodate" // Will copy the contents of the directory into the module directory
+    }
+  }
+}"""
+
+        when:
+        def result = GradleRunner.create()
+                                 .withGradleVersion(gradleVersion)
+                                 .withProjectDir(testProjectDir.root)
+                                 .withPluginClasspath()
+                                 .withArguments('-i', '-s', '-d', 'jythonDownload')
+                                 .build()
+
+        then:
+        result.output.contains('Downloading Jython library')
+        result.task(":jythonDownload").outcome == TaskOutcome.SUCCESS
+
+        and:
+        def m = testProjectDir.newFolder("build", "jython", "main")
+        new File(m, "six.py").exists()
+        new File(m, "isodate").isDirectory()
+
+        where:
+        gradleVersion << ['4.9', '5.2.1']
     }
 }

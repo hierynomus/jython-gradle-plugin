@@ -20,13 +20,15 @@ import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.internal.artifacts.dependencies.AbstractExternalModuleDependency
 import org.gradle.util.ConfigureUtil
 
+import static org.gradle.api.internal.artifacts.DefaultModuleIdentifier.newId
+
 class PythonDependency extends AbstractExternalModuleDependency {
     String moduleName
     List<CopiedArtifact> toCopy = []
     boolean useModuleName = true
 
     PythonDependency(String group, String name, String version, String configuration) {
-        super(group, name, version, configuration)
+        super(newId(group, name), version, configuration)
         this.moduleName = name
     }
 

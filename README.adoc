@@ -10,6 +10,9 @@ image::https://travis-ci.org/hierynomus/jython-gradle-plugin.svg?branch=master[]
 == Usage
 The `jython-gradle-plugin` will be published to http://bintray.com[] and will be available through the http://plugins.gradle.org/[Gradle plugin exchange]. This means that there are a few different usage scenarios listed below.
 
+Plugin version 0.10.0 and earlier can be used with Gradle 4.8.1 and earlier.
+Later plugin versions require Gradle 4.9 or newer.
+
 === Gradle 2.1 and above
 In your `build.gradle` file add:
 

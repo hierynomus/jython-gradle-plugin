@@ -34,7 +34,7 @@ class PythonDependency extends AbstractExternalModuleDependency {
 
     static PythonDependency create(depInfo) {
         def pd
-        if (depInfo instanceof String) {
+        if (depInfo instanceof String || depInfo instanceof org.codehaus.groovy.runtime.GStringImpl) {
             def split = depInfo.split(":")
             pd = new PythonDependency(split[0], split[1], split[2], null)
             if (split.length > 3) {
